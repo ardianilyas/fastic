@@ -211,28 +211,28 @@ export default function TicketsShow({ ticket }: Props) {
                                     }
 
                                     const comment = log.data as Comment;
-                                    const isUser = comment.user.role !== 'admin';
+                                    const isCreator = comment.user_id === ticket.user_id;
 
                                     return (
                                         <div
                                             key={log.id}
                                             className={`flex gap-3 max-w-[85%] ${
-                                                isUser ? 'mr-auto' : 'ml-auto flex-row-reverse'
+                                                isCreator ? 'mr-auto' : 'ml-auto flex-row-reverse'
                                             }`}
                                         >
                                             <div className={`size-8 rounded-full flex items-center justify-center shrink-0 border ${
-                                                isUser ? 'bg-secondary border-border' : 'bg-primary/10 border-primary/20'
+                                                isCreator ? 'bg-secondary border-border' : 'bg-primary/10 border-primary/20'
                                             }`}>
-                                                <User className={`size-4 ${isUser ? 'text-muted-foreground' : 'text-primary'}`} />
+                                                <User className={`size-4 ${isCreator ? 'text-muted-foreground' : 'text-primary'}`} />
                                             </div>
                                             <div className={`space-y-1 p-4 rounded-xl border ${
-                                                isUser 
+                                                isCreator 
                                                     ? 'bg-muted rounded-tl-none border-border' 
                                                     : 'bg-primary/5 rounded-tr-none border-primary/10'
                                             }`}>
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`text-sm font-semibold ${isUser ? 'text-foreground' : 'text-primary'}`}>
-                                                        {isUser ? 'You' : `${comment.user.name} (Support)`}
+                                                    <span className={`text-sm font-semibold ${isCreator ? 'text-foreground' : 'text-primary'}`}>
+                                                        {isCreator ? 'You' : `${comment.user.name} (Support)`}
                                                     </span>
                                                     <span className="text-xs text-muted-foreground font-mono">
                                                         {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

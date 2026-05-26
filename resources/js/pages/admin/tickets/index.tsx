@@ -218,8 +218,8 @@ export default function AdminTicketsIndex({ tickets, stats, categories, admins, 
                 </div>
 
                 {/* Filters Board */}
-                <div className="flex flex-col gap-4 bg-card/40 border border-border p-4 rounded-xl">
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="flex flex-col gap-2 bg-card/40 border border-border p-4 rounded-xl">
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
                         {/* Search */}
                         <div className="relative lg:col-span-1">
                             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

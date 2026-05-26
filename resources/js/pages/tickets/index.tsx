@@ -1,12 +1,23 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Search, LifeBuoy, AlertCircle, Clock, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Plus, Search, LifeBuoy, AlertCircle, Clock, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import Heading from '@/components/heading';
 import { Pagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import ticketsRoute from '@/routes/tickets';
 
 interface Category {
@@ -45,6 +56,7 @@ interface PaginatedData<T> {
 
 interface Props {
     tickets: PaginatedData<Ticket>;
+    categories: Category[];
     filters: {
         search: string | null;
         status: string | null;
@@ -52,10 +64,40 @@ interface Props {
     };
 }
 
-export default function TicketsIndex({ tickets, filters }: Props) {
+export default function TicketsIndex({ tickets, categories, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
     const [priority, setPriority] = useState(filters.priority || 'all');
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    // Create Form
+    const createForm = useForm({
+        category_id: '',
+        title: '',
+        description: '',
+        priority: 'medium',
+    });
+
+    const handleCreateClick = () => {
+        createForm.reset();
+        createForm.clearErrors();
+        setIsCreateOpen(true);
+    };
+
+    const handleCreateSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        createForm.post(ticketsRoute.store.url(), {
+            onSuccess: () => {
+                setIsCreateOpen(false);
+                createForm.reset();
+                toast.success('Ticket submitted successfully.');
+            },
+            onError: () => {
+                toast.error('Failed to submit ticket. Please check form errors.');
+            },
+        });
+    };
 
     // Run search and filters update on value change
     const applyFilters = () => {
@@ -89,7 +131,6 @@ export default function TicketsIndex({ tickets, filters }: Props) {
             case 'in_progress':
                 return <Clock className="size-3.5" />;
             case 'resolved':
-                return <CheckCircle2 className="size-3.5" />;
             case 'closed':
                 return <CheckCircle2 className="size-3.5" />;
             default:
@@ -138,16 +179,14 @@ export default function TicketsIndex({ tickets, filters }: Props) {
                         description="View, track, and submit your help desk tickets."
                     />
 
-                    <Button asChild className="w-full sm:w-auto shadow-sm transition-transform hover:scale-[1.01] active:scale-[0.99]">
-                        <Link href={ticketsRoute.create.url()} className="flex items-center gap-2">
-                            <Plus className="size-4" />
-                            New Ticket
-                        </Link>
+                    <Button onClick={handleCreateClick} className="w-full sm:w-auto shadow-sm transition-transform hover:scale-[1.01] active:scale-[0.99] flex items-center gap-2">
+                        <Plus className="size-4" />
+                        New Ticket
                     </Button>
                 </div>
 
-                {/* Filters Board */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card/40 border border-border p-4 rounded-xl">
+                {/* Filters Board - with thin gap-2 */}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between bg-card/40 border border-border p-4 rounded-xl">
                     <div className="relative max-w-sm w-full">
                         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
@@ -159,7 +198,7 @@ export default function TicketsIndex({ tickets, filters }: Props) {
                         />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                         <div className="w-[140px]">
                             <Select value={status} onValueChange={setStatus}>
                                 <SelectTrigger>
@@ -203,9 +242,7 @@ export default function TicketsIndex({ tickets, filters }: Props) {
                                 : "You haven't submitted any support requests yet."}
                         </p>
                         {!search && status === 'all' && priority === 'all' && (
-                            <Button asChild>
-                                <Link href={ticketsRoute.create.url()}>Create your first ticket</Link>
-                            </Button>
+                            <Button onClick={handleCreateClick}>Create your first ticket</Button>
                         )}
                     </div>
                 ) : (
@@ -261,6 +298,113 @@ export default function TicketsIndex({ tickets, filters }: Props) {
                     </>
                 )}
             </div>
+
+            {/* Create Ticket Modal Dialog */}
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogContent className="sm:max-w-140">
+                    <form onSubmit={handleCreateSubmit}>
+                        <DialogHeader>
+                            <DialogTitle>Submit a Ticket</DialogTitle>
+                            <DialogDescription>
+                                Provide details below to let our team resolve your issue quickly.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid gap-4 py-4">
+                            {/* Title */}
+                            <div className="grid gap-2">
+                                <Label htmlFor="title">Title</Label>
+                                <Input
+                                    id="title"
+                                    type="text"
+                                    placeholder="e.g. Cannot log in to the dashboard"
+                                    value={createForm.data.title}
+                                    onChange={(e) => createForm.setData('title', e.target.value)}
+                                    required
+                                />
+                                {createForm.errors.title && (
+                                    <p className="text-xs text-destructive">{createForm.errors.title}</p>
+                                )}
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                {/* Category */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="category_id">Category</Label>
+                                    <Select
+                                        value={createForm.data.category_id}
+                                        onValueChange={(value) => createForm.setData('category_id', value)}
+                                    >
+                                        <SelectTrigger id="category_id">
+                                            <SelectValue placeholder="Select category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {categories.map((category) => (
+                                                <SelectItem key={category.id} value={category.id}>
+                                                    {category.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {createForm.errors.category_id && (
+                                        <p className="text-xs text-destructive">{createForm.errors.category_id}</p>
+                                    )}
+                                </div>
+
+                                {/* Priority */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="priority">Priority</Label>
+                                    <Select
+                                        value={createForm.data.priority}
+                                        onValueChange={(value) => createForm.setData('priority', value)}
+                                    >
+                                        <SelectTrigger id="priority">
+                                            <SelectValue placeholder="Select priority" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="low">Low</SelectItem>
+                                            <SelectItem value="medium">Medium</SelectItem>
+                                            <SelectItem value="high">High</SelectItem>
+                                            <SelectItem value="critical">Critical</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {createForm.errors.priority && (
+                                        <p className="text-xs text-destructive">{createForm.errors.priority}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Description */}
+                            <div className="grid gap-2">
+                                <Label htmlFor="description">Description</Label>
+                                <textarea
+                                    id="description"
+                                    placeholder="Describe your issue in detail. Add any steps to reproduce or error messages."
+                                    value={createForm.data.description}
+                                    onChange={(e) => createForm.setData('description', e.target.value)}
+                                    required
+                                    rows={4}
+                                    className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                                {createForm.errors.description && (
+                                    <p className="text-xs text-destructive">{createForm.errors.description}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline">
+                                    Cancel
+                                </Button>
+                            </DialogClose>
+                            <Button type="submit" disabled={createForm.processing}>
+                                {createForm.processing ? 'Submitting...' : 'Submit Ticket'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

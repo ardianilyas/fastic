@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Inbox, AlertCircle, Clock, CheckCircle2, User, Send, Calendar, Tag, ShieldAlert, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -279,26 +279,26 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                                     }
 
                                     const comment = log.data as Comment;
-                                    const isUser = comment.user.role !== 'admin';
+                                    const isCreator = comment.user_id === ticket.user_id;
 
                                     return (
                                         <div
                                             key={log.id}
                                             className={`flex gap-3 max-w-[85%] ${
-                                                isUser ? 'mr-auto' : 'ml-auto flex-row-reverse'
+                                                isCreator ? 'mr-auto' : 'ml-auto flex-row-reverse'
                                             }`}
                                         >
                                             <div className={`size-8 rounded-full flex items-center justify-center shrink-0 border ${
                                                 comment.is_internal 
                                                     ? 'bg-orange-500/10 border-orange-500/20'
-                                                    : isUser 
+                                                    : isCreator 
                                                         ? 'bg-secondary border-border' 
                                                         : 'bg-primary/10 border-primary/20'
                                             }`}>
                                                 <User className={`size-4 ${
                                                     comment.is_internal 
                                                         ? 'text-orange-500' 
-                                                        : isUser 
+                                                        : isCreator 
                                                             ? 'text-muted-foreground' 
                                                             : 'text-primary'
                                                 }`} />
@@ -306,7 +306,7 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                                             <div className={`space-y-1 p-4 rounded-xl border ${
                                                 comment.is_internal
                                                     ? 'bg-orange-500/5 rounded-tr-none border-orange-500/20'
-                                                    : isUser 
+                                                    : isCreator 
                                                         ? 'bg-muted rounded-tl-none border-border' 
                                                         : 'bg-primary/5 rounded-tr-none border-primary/10'
                                             }`}>
@@ -314,11 +314,11 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                                                     <span className={`text-sm font-semibold flex items-center gap-1.5 ${
                                                         comment.is_internal 
                                                             ? 'text-orange-500' 
-                                                            : isUser 
+                                                            : isCreator 
                                                                 ? 'text-foreground' 
                                                                 : 'text-primary'
                                                     }`}>
-                                                        {isUser ? comment.user.name : `${comment.user.name} (Support)`}
+                                                        {isCreator ? comment.user.name : `${comment.user.name} (Support)`}
                                                         {comment.is_internal && (
                                                             <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 px-1 py-0 text-[10px] flex items-center gap-0.5">
                                                                 <Lock className="size-2.5" /> Internal Note

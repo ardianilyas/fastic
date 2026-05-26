@@ -43,8 +43,11 @@ class TicketController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $categories = Category::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('tickets/index', [
             'tickets' => $tickets,
+            'categories' => $categories,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
