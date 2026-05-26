@@ -4,8 +4,18 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import Heading from '@/components/heading';
 import { Pagination } from '@/components/pagination';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -138,9 +148,7 @@ export default function CategoriesIndex({ categories }: Props) {
         }
     };
 
-    const handleDeleteSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleDeleteConfirm = () => {
         if (!deletingCategory) {
             return;
         }
@@ -348,32 +356,30 @@ export default function CategoriesIndex({ categories }: Props) {
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Modal Confirmation Dialog */}
-            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <DialogContent className="sm:max-w-100">
-                    <form onSubmit={handleDeleteSubmit}>
-                        <DialogHeader>
-                            <DialogTitle className="text-destructive">Delete Category</DialogTitle>
-                            <DialogDescription>
-                                Are you sure you want to delete the category{' '}
-                                <strong className="text-foreground">"{deletingCategory?.name}"</strong>? This action
-                                cannot be undone and will affect associated tickets.
-                            </DialogDescription>
-                        </DialogHeader>
+            {/* Delete Confirmation Alert Dialog */}
+            <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <AlertDialogContent className="sm:max-w-100">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-destructive">Delete Category</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete the category{' '}
+                            <strong className="text-foreground">"{deletingCategory?.name}"</strong>? This action
+                            cannot be undone and will affect associated tickets.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
 
-                        <DialogFooter className="mt-6 gap-2">
-                            <DialogClose asChild>
-                                <Button type="button" variant="outline">
-                                    Cancel
-                                </Button>
-                            </DialogClose>
-                            <Button type="submit" variant="destructive" disabled={deleteForm.processing}>
-                                {deleteForm.processing ? 'Deleting...' : 'Delete'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                    <AlertDialogFooter className="mt-6 gap-2">
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteConfirm}
+                            className={buttonVariants({ variant: 'destructive' })}
+                            disabled={deleteForm.processing}
+                        >
+                            {deleteForm.processing ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }
