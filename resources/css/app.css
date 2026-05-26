@@ -7,11 +7,20 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Fastic Design System
+ * Based on DESIGN.md — warm cream canvas, Cursor Orange accent, editorial typography.
+ * Font: Inter (substitute for CursorGothic) + JetBrains Mono for code.
+ */
+
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Inter', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+
+    --font-mono:
+        'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -41,6 +50,9 @@
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
 
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
@@ -61,75 +73,134 @@
     --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/*
+ * Light theme — Fastic warm cream canvas
+ * Canvas: #f7f7f4, Ink: #26251e, Primary: #f54e00 (Cursor Orange)
+ */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    /* Surface */
+    --background: #f7f7f4;
+    --foreground: #26251e;
+
+    /* Card — white on warm cream for subtle contrast */
+    --card: #ffffff;
+    --card-foreground: #26251e;
+
+    /* Popover */
+    --popover: #ffffff;
+    --popover-foreground: #26251e;
+
+    /* Primary — Cursor Orange, used scarcely */
+    --primary: #f54e00;
+    --primary-foreground: #ffffff;
+
+    /* Secondary — surface-strong */
+    --secondary: #e6e5e0;
+    --secondary-foreground: #26251e;
+
+    /* Muted — hairline-soft background */
+    --muted: #efeee8;
+    --muted-foreground: #807d72;
+
+    /* Accent — canvas-soft */
+    --accent: #fafaf7;
+    --accent-foreground: #26251e;
+
+    /* Destructive — semantic error */
+    --destructive: #cf2d56;
+    --destructive-foreground: #ffffff;
+
+    /* Success — semantic success */
+    --success: #1f8a65;
+    --success-foreground: #ffffff;
+
+    /* Borders — hairline-only depth, no shadows */
+    --border: #e6e5e0;
+    --input: #cfcdc4;
+    --ring: #f54e00;
+
+    /* Chart — timeline palette */
+    --chart-1: #dfa88f;
+    --chart-2: #9fc9a2;
+    --chart-3: #9fbbe0;
+    --chart-4: #c0a8dd;
+    --chart-5: #c08532;
+
+    /* Radius — compact 8px for developer dialect */
+    --radius: 0.5rem;
+
+    /* Sidebar */
+    --sidebar: #f7f7f4;
+    --sidebar-foreground: #26251e;
+    --sidebar-primary: #f54e00;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #fafaf7;
+    --sidebar-accent-foreground: #26251e;
+    --sidebar-border: #e6e5e0;
+    --sidebar-ring: #f54e00;
 }
 
+/*
+ * Dark theme — warm near-black tones preserving Fastic brand warmth
+ */
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    /* Surface */
+    --background: #1a1917;
+    --foreground: #f7f7f4;
+
+    /* Card */
+    --card: #26251e;
+    --card-foreground: #f7f7f4;
+
+    /* Popover */
+    --popover: #26251e;
+    --popover-foreground: #f7f7f4;
+
+    /* Primary — Cursor Orange stays vivid */
+    --primary: #f54e00;
+    --primary-foreground: #ffffff;
+
+    /* Secondary */
+    --secondary: #33322b;
+    --secondary-foreground: #f7f7f4;
+
+    /* Muted */
+    --muted: #33322b;
+    --muted-foreground: #a09c92;
+
+    /* Accent */
+    --accent: #33322b;
+    --accent-foreground: #f7f7f4;
+
+    /* Destructive */
+    --destructive: #cf2d56;
+    --destructive-foreground: #ffffff;
+
+    /* Success */
+    --success: #1f8a65;
+    --success-foreground: #ffffff;
+
+    /* Borders */
+    --border: #3d3c34;
+    --input: #3d3c34;
+    --ring: #f54e00;
+
+    /* Chart — same timeline palette, works on dark */
+    --chart-1: #dfa88f;
+    --chart-2: #9fc9a2;
+    --chart-3: #9fbbe0;
+    --chart-4: #c0a8dd;
+    --chart-5: #c08532;
+
+    /* Sidebar */
+    --sidebar: #1a1917;
+    --sidebar-foreground: #f7f7f4;
+    --sidebar-primary: #f54e00;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #33322b;
+    --sidebar-accent-foreground: #f7f7f4;
+    --sidebar-border: #3d3c34;
+    --sidebar-ring: #f54e00;
 }
 
 @layer base {
