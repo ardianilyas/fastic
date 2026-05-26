@@ -27,3 +27,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Antigravity/Gemini Specific Files
+.agents/
+.gemini/
+GEMINI.md
+boost.json

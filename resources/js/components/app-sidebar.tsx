@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { BookOpen, FolderGit2, LayoutGrid, Tags } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,6 +14,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import categoriesRoute from '@/routes/admin/categories';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -38,6 +39,18 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isAdmin = user?.role === 'admin';
+
+    const adminNavItems: NavItem[] = [
+        {
+            title: 'Categories',
+            href: categoriesRoute.index.url(),
+            icon: Tags,
+        },
+    ];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -54,6 +67,12 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={mainNavItems} />
+                
+                {isAdmin && (
+                    <div className="mt-4">
+                        <NavMain items={adminNavItems} />
+                    </div>
+                )}
             </SidebarContent>
 
             <SidebarFooter>
