@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, Tags } from 'lucide-react';
+import { BookOpen, FolderGit2, LayoutGrid, Tags, LifeBuoy, Inbox } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -15,15 +15,9 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import categoriesRoute from '@/routes/admin/categories';
+import ticketsRoute from '@/routes/tickets';
+import adminTicketsRoute from '@/routes/admin/tickets';
 import type { NavItem } from '@/types';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
 
 const footerNavItems: NavItem[] = [
     {
@@ -43,7 +37,25 @@ export function AppSidebar() {
     const user = auth?.user;
     const isAdmin = user?.role === 'admin';
 
+    const mainNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Tickets',
+            href: ticketsRoute.index.url(),
+            icon: LifeBuoy,
+        },
+    ];
+
     const adminNavItems: NavItem[] = [
+        {
+            title: 'All Tickets',
+            href: adminTicketsRoute.index.url(),
+            icon: Inbox,
+        },
         {
             title: 'Categories',
             href: categoriesRoute.index.url(),
