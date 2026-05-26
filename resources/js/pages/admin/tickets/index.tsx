@@ -374,9 +374,9 @@ export default function AdminTicketsIndex({ tickets, stats, categories, admins, 
                     </div>
                 ) : (
                     <>
-                        {/* Table header */}
-                        <div className="overflow-hidden rounded-xl border border-border bg-card">
-                            {/* Header row */}
+                        <div className="overflow-x-auto rounded-xl border border-border bg-card">
+                        <div className="min-w-[800px]">
+                            {/* Table header */}
                             <div className="grid grid-cols-[7rem_1fr_7rem_7rem_9rem_8rem] items-center border-b border-border bg-muted/40 px-4 py-2 text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
                                 <span>Code</span>
                                 <span>Ticket</span>
@@ -454,11 +454,12 @@ export default function AdminTicketsIndex({ tickets, stats, categories, admins, 
                                 })}
                             </div>
                         </div>
+                    </div>
 
-                        {/* Pagination */}
-                        <Pagination links={tickets.links} />
-                    </>
-                )}
+                    {/* Pagination */}
+                    <Pagination links={tickets.links} />
+                </>
+            )}
             </div>
         </>
     );

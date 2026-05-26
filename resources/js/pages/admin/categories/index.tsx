@@ -1,5 +1,21 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Check, Edit2, Plus, Search, Tags, Trash2, X } from 'lucide-react';
+import {
+    Calendar,
+    Check,
+    Cpu,
+    Edit2,
+    Globe,
+    Laptop,
+    Plus,
+    RefreshCw,
+    Search,
+    ShieldAlert,
+    Tag,
+    Tags,
+    Terminal,
+    Trash2,
+    X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Heading from '@/components/heading';
@@ -30,7 +46,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import categoriesRoute from '@/routes/admin/categories';
 
-
 interface Category {
     id: string;
     name: string;
@@ -56,8 +71,33 @@ interface Props {
     categories: PaginatedData<Category>;
 }
 
+const getCategoryIcon = (name: string) => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('hardware') || lowerName.includes('device') || lowerName.includes('computer') || lowerName.includes('screen') || lowerName.includes('monitor') || lowerName.includes('laptop')) {
+        return { icon: Laptop, color: 'text-blue-500 bg-blue-500/8 border-blue-500/10' };
+    }
+    if (lowerName.includes('software') || lowerName.includes('bug') || lowerName.includes('app') || lowerName.includes('error') || lowerName.includes('crash') || lowerName.includes('code')) {
+        return { icon: Terminal, color: 'text-amber-500 bg-amber-500/8 border-amber-500/10' };
+    }
+    if (lowerName.includes('network') || lowerName.includes('internet') || lowerName.includes('wifi') || lowerName.includes('server') || lowerName.includes('cloud')) {
+        return { icon: Globe, color: 'text-emerald-500 bg-emerald-500/8 border-emerald-500/10' };
+    }
+    if (lowerName.includes('security') || lowerName.includes('login') || lowerName.includes('auth') || lowerName.includes('password') || lowerName.includes('account')) {
+        return { icon: ShieldAlert, color: 'text-red-500 bg-red-500/8 border-red-500/10' };
+    }
+    if (lowerName.includes('billing') || lowerName.includes('payment') || lowerName.includes('invoice') || lowerName.includes('pricing') || lowerName.includes('subscription')) {
+        return { icon: Cpu, color: 'text-violet-500 bg-violet-500/8 border-violet-500/10' };
+    }
+    return { icon: Tag, color: 'text-primary bg-primary/8 border-primary/10' };
+};
+
+function formatDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export default function CategoriesIndex({ categories }: Props) {
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [isSaveOpen, setIsSaveOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -76,12 +116,19 @@ export default function CategoriesIndex({ categories }: Props) {
     // Filter categories (client-side of currently paginated items)
     const filteredCategories = categories.data.filter((category) => {
         const query = searchQuery.toLowerCase();
-
-        return (
+        const matchesSearch =
             category.name.toLowerCase().includes(query) ||
-            (category.description?.toLowerCase() || '').includes(query)
-        );
+            (category.description?.toLowerCase() || '').includes(query);
+
+        const matchesStatus =
+            statusFilter === 'all' ||
+            (statusFilter === 'active' && category.is_active) ||
+            (statusFilter === 'inactive' && !category.is_active);
+
+        return matchesSearch && matchesStatus;
     });
+
+    const hasFilters = searchQuery || statusFilter !== 'all';
 
     const handleCreateClick = () => {
         setEditingCategory(null);
@@ -121,7 +168,6 @@ export default function CategoriesIndex({ categories }: Props) {
         };
 
         if (editingCategory) {
-            // Using Wayfinder routes instead of Ziggy global route helper to fix the frontend bug
             saveForm.put(categoriesRoute.update.url(editingCategory.id), {
                 data: payload,
                 onSuccess: () => {
@@ -133,7 +179,6 @@ export default function CategoriesIndex({ categories }: Props) {
                 },
             });
         } else {
-            // Using Wayfinder routes instead of Ziggy global route helper to fix the frontend bug
             saveForm.post(categoriesRoute.store.url(), {
                 data: payload,
                 onSuccess: () => {
@@ -153,7 +198,6 @@ export default function CategoriesIndex({ categories }: Props) {
             return;
         }
 
-        // Using Wayfinder routes instead of Ziggy global route helper to fix the frontend bug
         deleteForm.delete(categoriesRoute.destroy.url(deletingCategory.id), {
             onSuccess: () => {
                 setIsDeleteOpen(false);
@@ -164,6 +208,11 @@ export default function CategoriesIndex({ categories }: Props) {
                 toast.error('Failed to delete category.');
             },
         });
+    };
+
+    const handleClearFilters = () => {
+        setSearchQuery('');
+        setStatusFilter('all');
     };
 
     return (
@@ -179,100 +228,141 @@ export default function CategoriesIndex({ categories }: Props) {
 
                     <Button
                         onClick={handleCreateClick}
-                        className="w-full sm:w-auto flex items-center gap-2 shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        className="w-full sm:w-auto flex items-center gap-2 shadow-xs transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                     >
                         <Plus className="size-4" />
                         Add Category
                     </Button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative max-w-md w-full">
-                    <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        type="text"
-                        placeholder="Search categories on this page..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 w-full"
-                    />
+                {/* Filters Row */}
+                <div className="rounded-xl border border-border bg-card/60 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Search */}
+                        <div className="relative min-w-48 flex-1 max-w-md">
+                            <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Search categories..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="h-8 pl-8 text-sm"
+                            />
+                        </div>
+
+                        {/* Status Filter */}
+                        <Select value={statusFilter} onValueChange={(val: any) => setStatusFilter(val)}>
+                            <SelectTrigger className="h-8 w-36 text-sm">
+                                <SelectValue placeholder="All Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Status</SelectItem>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        {/* Clear button */}
+                        {hasFilters && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleClearFilters}
+                                className="h-8 gap-1.5 px-2.5 text-xs text-primary hover:bg-primary/8 hover:text-primary"
+                            >
+                                <RefreshCw className="size-3" />
+                                Clear
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Categories Grid */}
                 {filteredCategories.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border p-12 text-center bg-card/20">
-                        <Tags className="size-10 text-muted-foreground/60 mb-4" />
-                        <h3 className="text-lg font-semibold">No categories found</h3>
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border p-16 text-center bg-card/25">
+                        <Tags className="size-12 text-muted-foreground/50 mb-4" />
+                        <h3 className="text-base font-semibold">No categories found</h3>
                         <p className="text-sm text-muted-foreground max-w-xs mt-1">
-                            {searchQuery ? 'Try adjusting your search terms.' : 'Get started by creating a new category.'}
+                            {hasFilters ? 'Try adjusting your search or filters.' : 'Get started by creating a new category.'}
                         </p>
                     </div>
                 ) : (
                     <>
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {filteredCategories.map((category) => (
-                                <div
-                                    key={category.id}
-                                    className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card/60 backdrop-blur-md p-5 transition-all duration-300 hover:border-sidebar-border hover:shadow-md"
-                                >
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                                                {category.name}
-                                            </h3>
-                                            <Badge
-                                                variant={category.is_active ? 'default' : 'secondary'}
-                                                className={`px-2 py-0.5 text-xs flex items-center gap-1 font-medium ${
-                                                    category.is_active
-                                                        ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10'
-                                                        : ''
-                                                }`}
-                                            >
+                            {filteredCategories.map((category) => {
+                                const catIcon = getCategoryIcon(category.name);
+                                const IconComp = catIcon.icon;
+
+                                return (
+                                    <div
+                                        key={category.id}
+                                        className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card/60 backdrop-blur-md p-5 transition-all duration-300 hover:-translate-y-1 hover:border-sidebar-border hover:shadow-md"
+                                    >
+                                        {/* Dynamic Category Icon Badge + Status Tag */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <span className={`flex size-9 items-center justify-center rounded-xl border ${catIcon.color}`}>
+                                                    <IconComp className="size-4.5" strokeWidth={2} />
+                                                </span>
+
+                                                {/* Pulsing Active State indicator */}
                                                 {category.is_active ? (
-                                                    <>
-                                                        <Check className="size-3" /> Active
-                                                    </>
+                                                    <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/8 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                                        <span className="relative flex h-1.5 w-1.5">
+                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                                        </span>
+                                                        Active
+                                                    </span>
                                                 ) : (
-                                                    <>
-                                                        <X className="size-3" /> Inactive
-                                                    </>
+                                                    <span className="flex items-center gap-1.5 rounded-full bg-slate-500/8 px-2.5 py-1 text-[11px] font-semibold text-slate-500">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                                                        Inactive
+                                                    </span>
                                                 )}
-                                            </Badge>
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-base">
+                                                    {category.name}
+                                                </h3>
+                                                <p className="text-sm text-muted-foreground line-clamp-3 min-h-12 leading-relaxed">
+                                                    {category.description || 'No description provided.'}
+                                                </p>
+                                            </div>
                                         </div>
 
-                                        <p className="text-sm text-muted-foreground line-clamp-3 min-h-10">
-                                            {category.description || 'No description provided.'}
-                                        </p>
-                                    </div>
+                                        {/* Bottom Action Footer */}
+                                        <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
+                                            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                                <Calendar className="size-3.5 text-muted-foreground/60" />
+                                                {formatDate(category.created_at)}
+                                            </span>
 
-                                    <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                                        <span className="text-xs text-muted-foreground">
-                                            Created {new Date(category.created_at).toLocaleDateString()}
-                                        </span>
-
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleEditClick(category)}
-                                                className="size-8 text-muted-foreground hover:text-foreground"
-                                                title="Edit Category"
-                                            >
-                                                <Edit2 className="size-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleDeleteClick(category)}
-                                                className="size-8 text-muted-foreground hover:text-destructive"
-                                                title="Delete Category"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </Button>
+                                            <div className="flex items-center gap-1.5">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleEditClick(category)}
+                                                    className="size-8 rounded-lg text-muted-foreground hover:bg-primary/8 hover:text-primary transition-all duration-150"
+                                                    title="Edit Category"
+                                                >
+                                                    <Edit2 className="size-3.5" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleDeleteClick(category)}
+                                                    className="size-8 rounded-lg text-muted-foreground hover:bg-destructive/8 hover:text-destructive transition-all duration-150"
+                                                    title="Delete Category"
+                                                >
+                                                    <Trash2 className="size-3.5" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {/* Reusable Pagination Component */}
@@ -285,7 +375,7 @@ export default function CategoriesIndex({ categories }: Props) {
 
             {/* Save Modal Dialog (Create & Update) */}
             <Dialog open={isSaveOpen} onOpenChange={setIsSaveOpen}>
-                <DialogContent className="sm:max-w-106.25">
+                <DialogContent className="sm:max-w-[425px]">
                     <form onSubmit={handleSaveSubmit}>
                         <DialogHeader>
                             <DialogTitle>{editingCategory ? 'Edit Category' : 'Create Category'}</DialogTitle>
@@ -311,11 +401,13 @@ export default function CategoriesIndex({ categories }: Props) {
 
                             <div className="grid gap-2">
                                 <Label htmlFor="description">Description</Label>
-                                <Input
+                                <textarea
                                     id="description"
                                     value={saveForm.data.description}
                                     onChange={(e) => saveForm.setData('description', e.target.value)}
                                     placeholder="Describe the type of issues in this category"
+                                    rows={3}
+                                    className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                                 {saveForm.errors.description && (
                                     <p className="text-xs text-destructive">{saveForm.errors.description}</p>
@@ -358,7 +450,7 @@ export default function CategoriesIndex({ categories }: Props) {
 
             {/* Delete Confirmation Alert Dialog */}
             <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <AlertDialogContent className="sm:max-w-100">
+                <AlertDialogContent className="sm:max-w-[400px]">
                     <AlertDialogHeader>
                         <AlertDialogTitle className="text-destructive">Delete Category</AlertDialogTitle>
                         <AlertDialogDescription>

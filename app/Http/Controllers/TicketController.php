@@ -24,13 +24,15 @@ class TicketController extends Controller
         $search = $request->input('search');
         $status = $request->input('status');
         $priority = $request->input('priority');
+        $categoryId = $request->input('category_id');
 
         $tickets = Ticket::with(['category', 'assignee'])
             ->where('user_id', auth()->id())
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('title', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhere('code', 'like', "%{$search}%");
                 });
             })
             ->when($status, function ($query) use ($status) {
@@ -38,6 +40,9 @@ class TicketController extends Controller
             })
             ->when($priority, function ($query) use ($priority) {
                 $query->where('priority', $priority);
+            })
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('category_id', $categoryId);
             })
             ->orderBy('created_at', 'desc')
             ->paginate(10)
@@ -52,6 +57,7 @@ class TicketController extends Controller
                 'search' => $search,
                 'status' => $status,
                 'priority' => $priority,
+                'category_id' => $categoryId,
             ],
         ]);
     }

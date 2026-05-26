@@ -36,6 +36,41 @@ test('regular user can view their own tickets list', function () {
         );
 });
 
+test('regular user can search their own tickets by code', function () {
+    $user = User::factory()->create();
+    $ticketA = Ticket::factory()->create(['user_id' => $user->id, 'title' => 'First Ticket']);
+    $ticketB = Ticket::factory()->create(['user_id' => $user->id, 'title' => 'Second Ticket']);
+
+    $codeA = $ticketA->code;
+
+    $this->actingAs($user)
+        ->get(route('tickets.index', ['search' => $codeA]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('tickets/index')
+            ->has('tickets.data', 1)
+            ->where('tickets.data.0.title', 'First Ticket')
+        );
+});
+
+test('regular user can filter their own tickets by category', function () {
+    $user = User::factory()->create();
+    $catA = Category::factory()->create();
+    $catB = Category::factory()->create();
+
+    Ticket::factory()->create(['user_id' => $user->id, 'category_id' => $catA->id, 'title' => 'Category A Ticket']);
+    Ticket::factory()->create(['user_id' => $user->id, 'category_id' => $catB->id, 'title' => 'Category B Ticket']);
+
+    $this->actingAs($user)
+        ->get(route('tickets.index', ['category_id' => $catA->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('tickets/index')
+            ->has('tickets.data', 1)
+            ->where('tickets.data.0.title', 'Category A Ticket')
+        );
+});
+
 test('regular user can view create ticket page with active categories', function () {
     $user = User::factory()->create();
     Category::factory()->create(['name' => 'Active Cat', 'is_active' => true]);

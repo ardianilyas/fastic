@@ -1,13 +1,28 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Inbox, AlertCircle, Clock, CheckCircle2, User, Send, Calendar, Tag, ShieldAlert, Lock } from 'lucide-react';
+import {
+    ArrowLeft,
+    Calendar,
+    CheckCircle2,
+    Clock,
+    Inbox,
+    Lock,
+    Send,
+    ShieldAlert,
+    Tag,
+    User,
+    Mail,
+    UserCheck,
+    MessageSquare,
+    Sparkles,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import adminTicketsRoute from '@/routes/admin/tickets';
 import adminCommentsRoute from '@/routes/admin/tickets/comments';
 
@@ -29,6 +44,7 @@ interface Comment {
     is_internal: boolean;
     created_at: string;
     user: User;
+    user_id: number;
 }
 
 interface TimelineEvent {
@@ -54,12 +70,61 @@ interface Ticket {
     assignee: User | null;
     comments: Comment[];
     timelines: TimelineEvent[];
+    assigned_to?: number | null;
 }
 
 interface Props {
     ticket: Ticket;
     admins: User[];
     categories: Category[];
+}
+
+const STATUS_CONFIG = {
+    open: {
+        label: 'Open',
+        icon: Clock,
+        bg: 'bg-blue-500/8 text-blue-600 dark:text-blue-400 border-blue-500/10',
+    },
+    in_progress: {
+        label: 'In Progress',
+        icon: Clock,
+        bg: 'bg-amber-500/8 text-amber-600 dark:text-amber-400 border-amber-500/10',
+    },
+    waiting: {
+        label: 'Waiting',
+        icon: Clock,
+        bg: 'bg-purple-500/8 text-purple-600 dark:text-purple-400 border-purple-500/10',
+    },
+    resolved: {
+        label: 'Resolved',
+        icon: CheckCircle2,
+        bg: 'bg-emerald-500/8 text-emerald-600 dark:text-emerald-400 border-emerald-500/10',
+    },
+    closed: {
+        label: 'Closed',
+        icon: Clock,
+        bg: 'bg-slate-500/8 text-slate-500 border-slate-500/10',
+    },
+} as const;
+
+const PRIORITY_CONFIG = {
+    low: { label: 'Low', style: 'text-slate-500 bg-slate-500/8 border-slate-500/10' },
+    medium: { label: 'Medium', style: 'text-sky-600 bg-sky-500/8 dark:text-sky-400 border-sky-500/10' },
+    high: { label: 'High', style: 'text-orange-600 bg-orange-500/8 dark:text-orange-400 border-orange-500/10' },
+    critical: { label: 'Critical', style: 'text-red-600 bg-red-500/8 font-semibold dark:text-red-400 border-red-500/10 animate-pulse' },
+} as const;
+
+const getUserInitials = (name: string) => {
+    return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase();
+};
+
+function formatDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default function AdminTicketsShow({ ticket, admins, categories }: Props) {
@@ -80,7 +145,7 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
     });
 
     const assigneeForm = useForm({
-        assigned_to: ticket.assigned_to ? ticket.assigned_to.toString() : 'unassigned',
+        assigned_to: ticket.assignee ? ticket.assignee.id.toString() : 'unassigned',
     });
 
     // Submissions
@@ -89,7 +154,6 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
 
         if (!commentForm.data.body.trim()) return;
 
-        // Ensure current active tab state matches form payload
         const isInternal = activeTab === 'internal';
 
         commentForm.post(adminCommentsRoute.store.url(ticket.id), {
@@ -108,7 +172,7 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
     };
 
     const handleStatusChange = (value: string) => {
-        statusForm.setData('status', value);
+        statusForm.setData('status', value as any);
         
         router.put(
             adminTicketsRoute.update.url(ticket.id),
@@ -121,7 +185,7 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
     };
 
     const handlePriorityChange = (value: string) => {
-        priorityForm.setData('priority', value);
+        priorityForm.setData('priority', value as any);
 
         router.put(
             adminTicketsRoute.update.url(ticket.id),
@@ -146,50 +210,6 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
         );
     };
 
-    const getStatusIcon = (status: Ticket['status']) => {
-        switch (status) {
-            case 'open':
-                return <AlertCircle className="size-4" />;
-            case 'in_progress':
-                return <Clock className="size-4" />;
-            case 'resolved':
-            case 'closed':
-                return <CheckCircle2 className="size-4" />;
-            default:
-                return <Clock className="size-4" />;
-        }
-    };
-
-    const getStatusStyle = (status: Ticket['status']) => {
-        switch (status) {
-            case 'open':
-                return 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/10';
-            case 'in_progress':
-                return 'bg-amber-500/10 text-amber-500 hover:bg-amber-500/10';
-            case 'resolved':
-                return 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10';
-            case 'closed':
-                return 'bg-slate-500/10 text-slate-500 hover:bg-slate-500/10';
-            default:
-                return '';
-        }
-    };
-
-    const getPriorityStyle = (priority: Ticket['priority']) => {
-        switch (priority) {
-            case 'low':
-                return 'bg-slate-500/10 text-slate-500';
-            case 'medium':
-                return 'bg-blue-500/10 text-blue-500';
-            case 'high':
-                return 'bg-orange-500/10 text-orange-500';
-            case 'critical':
-                return 'bg-red-500/10 text-red-500 font-semibold animate-pulse';
-            default:
-                return '';
-        }
-    };
-
     // Combine comments and timeline events into a single sorted log for the chat thread
     const chatLog = [
         ...ticket.comments.map((c) => ({
@@ -208,9 +228,9 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
 
     return (
         <>
-            <Head title={`${ticket.code ?? ticket.id.substring(0, 8)} - Admin Dashboard`} />
+            <Head title={`${ticket.code ?? ticket.id.substring(0, 8)} - Support Workspace`} />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+            <div className="flex h-full flex-1 flex-col gap-4 p-4 sm:gap-6 sm:p-6">
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" asChild className="size-8">
                         <Link href={adminTicketsRoute.index.url()}>
@@ -230,33 +250,33 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                     </div>
                     <Heading
                         title={ticket.title}
-                        description={`Submitted on ${new Date(ticket.created_at).toLocaleDateString()} by ${ticket.user.name} (${ticket.user.email})`}
+                        description={`Submitted on ${formatDate(ticket.created_at)} by ${ticket.user.name} (${ticket.user.email})`}
                     />
                 </div>
 
                 {/* Two-Column split screen */}
-                <div className="grid gap-6 lg:grid-cols-3 items-start">
+                <div className="grid gap-4 sm:gap-6 md:grid-cols-3 items-start">
                     {/* Left side: Timeline Conversation Stream */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <Card className="border border-border bg-card/60 backdrop-blur-md shadow-sm rounded-xl">
-                            <CardHeader className="border-b border-border pb-4">
+                    <div className="md:col-span-2 space-y-4 sm:space-y-6">
+                        <Card className="overflow-hidden border border-border bg-card/60 backdrop-blur-md shadow-sm rounded-2xl">
+                            <CardHeader className="border-b border-border bg-muted/10 pb-4">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                    <Inbox className="size-4 text-primary" />
+                                    <Inbox className="size-4 text-primary" strokeWidth={2.25} />
                                     Support Conversation Thread
                                 </CardTitle>
                             </CardHeader>
-                            
-                            <CardContent className="pt-6 space-y-6 max-h-[60vh] overflow-y-auto min-h-[300px]">
-                                {/* Initial Description from creator */}
-                                <div className="flex gap-3 max-w-[85%]">
-                                    <div className="size-8 rounded-full bg-secondary flex items-center justify-center shrink-0 border border-border">
-                                        <User className="size-4 text-muted-foreground" />
-                                    </div>
-                                    <div className="space-y-1 bg-muted p-4 rounded-xl rounded-tl-none border border-border">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-foreground">{ticket.user.name} (Creator)</span>
+
+                            {/* Original Ticket Description Card */}
+                            <div className="border-b border-border bg-muted/25 p-5">
+                                <div className="flex items-start gap-4">
+                                    <span className="flex size-9 items-center justify-center rounded-xl border border-primary/10 bg-primary/8 text-primary shrink-0">
+                                        <Inbox className="size-4.5" />
+                                    </span>
+                                    <div className="space-y-2 flex-1">
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <h4 className="text-sm font-bold text-foreground">{ticket.user.name} (Creator)</h4>
                                             <span className="text-xs text-muted-foreground font-mono">
-                                                {new Date(ticket.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {formatDate(ticket.created_at)} at {new Date(ticket.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
                                         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
@@ -264,7 +284,9 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                                         </p>
                                     </div>
                                 </div>
-
+                            </div>
+                            
+                            <CardContent className="pt-6 space-y-6 max-h-[60vh] overflow-y-auto min-h-[300px]">
                                 {/* Dynamic Chronological Logs */}
                                 {chatLog.map((log) => {
                                     if (log.type === 'timeline') {
@@ -273,8 +295,8 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
 
                                         return (
                                             <div key={log.id} className="flex justify-center my-2">
-                                                <span className="text-xs bg-secondary/80 border border-border text-muted-foreground py-1 px-3 rounded-full flex items-center gap-1.5 font-mono">
-                                                    <Clock className="size-3" />
+                                                <span className="text-[11px] bg-muted/70 border border-border/60 text-muted-foreground py-1 px-3 rounded-full flex items-center gap-1.5 font-mono shadow-xs">
+                                                    <Clock className="size-3 text-muted-foreground/75" />
                                                     {event.description}
                                                 </span>
                                             </div>
@@ -287,25 +309,21 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                                     return (
                                         <div
                                             key={log.id}
-                                            className={`flex gap-3 max-w-[85%] ${
+                                            className={`flex gap-2 sm:gap-3 max-w-[95%] sm:max-w-[85%] ${
                                                 isCreator ? 'mr-auto' : 'ml-auto flex-row-reverse'
                                             }`}
                                         >
-                                            <div className={`size-8 rounded-full flex items-center justify-center shrink-0 border ${
+                                            {/* Dynamic Initials Avatars */}
+                                            <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold border select-none ${
                                                 comment.is_internal 
-                                                    ? 'bg-orange-500/10 border-orange-500/20'
+                                                    ? 'bg-orange-500/10 border-orange-500/20 text-orange-600'
                                                     : isCreator 
-                                                        ? 'bg-secondary border-border' 
-                                                        : 'bg-primary/10 border-primary/20'
+                                                        ? 'bg-secondary border-border text-secondary-foreground' 
+                                                        : 'bg-primary/10 border-primary/20 text-primary'
                                             }`}>
-                                                <User className={`size-4 ${
-                                                    comment.is_internal 
-                                                        ? 'text-orange-500' 
-                                                        : isCreator 
-                                                            ? 'text-muted-foreground' 
-                                                            : 'text-primary'
-                                                }`} />
+                                                {getUserInitials(comment.user.name)}
                                             </div>
+
                                             <div className={`space-y-1 p-4 rounded-xl border ${
                                                 comment.is_internal
                                                     ? 'bg-orange-500/5 rounded-tr-none border-orange-500/20'
@@ -323,8 +341,8 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                                                     }`}>
                                                         {isCreator ? comment.user.name : `${comment.user.name} (Support)`}
                                                         {comment.is_internal && (
-                                                            <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 px-1 py-0 text-[10px] flex items-center gap-0.5">
-                                                                <Lock className="size-2.5" /> Internal Note
+                                                            <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 px-1.5 py-0 text-[10px] flex items-center gap-0.5 font-bold shadow-xs">
+                                                                <Lock className="size-2.5" /> Internal
                                                             </Badge>
                                                         )}
                                                     </span>
@@ -344,48 +362,78 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
 
                         {/* Dual Tab Comment Submission Card */}
                         {ticket.status !== 'closed' && (
-                            <Card className="border border-border bg-card/60 backdrop-blur-md shadow-sm rounded-xl overflow-hidden">
-                                <div className="flex border-b border-border bg-muted/40">
+                            <Card className={`overflow-hidden border backdrop-blur-md shadow-sm transition-all duration-300 rounded-2xl ${
+                                activeTab === 'internal' 
+                                    ? 'border-orange-500/20 bg-orange-500/[0.02]' 
+                                    : 'border-border bg-card/60'
+                            }`}>
+                                <div className="flex p-2 select-none gap-2 bg-muted/30 border-b border-border/80">
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('public')}
-                                        className={`flex-1 py-2.5 text-xs font-medium border-r border-border transition-colors hover:bg-muted/80 ${
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
                                             activeTab === 'public'
-                                                ? 'bg-card text-foreground font-semibold border-b-2 border-b-primary'
-                                                : 'text-muted-foreground'
+                                                ? 'bg-background text-foreground shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                         }`}
                                     >
+                                        <MessageSquare className="size-3.5 text-primary" />
                                         Public Response
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('internal')}
-                                        className={`flex-1 py-2.5 text-xs font-medium transition-colors hover:bg-muted/80 flex items-center justify-center gap-1 ${
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
                                             activeTab === 'internal'
-                                                ? 'bg-card text-orange-500 font-semibold border-b-2 border-b-orange-500'
-                                                : 'text-muted-foreground'
+                                                ? 'bg-orange-500 text-white shadow-sm'
+                                                : 'text-muted-foreground hover:text-orange-500 hover:bg-muted/50'
                                         }`}
                                     >
-                                        <Lock className="size-3" />
+                                        <Lock className={`size-3.5 ${activeTab === 'internal' ? 'text-white' : 'text-orange-500'}`} />
                                         Internal Note
                                     </button>
                                 </div>
                                 <CardContent className="p-4 pt-4">
-                                    <form onSubmit={handleCommentSubmit} className="space-y-3">
-                                        <textarea
-                                            value={commentForm.data.body}
-                                            onChange={(e) => commentForm.setData('body', e.target.value)}
-                                            placeholder={activeTab === 'internal' ? 'Write a private internal note for other admins...' : 'Reply to the customer...'}
-                                            rows={3}
-                                            required
-                                            className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                        />
-                                        <div className="flex items-center justify-end">
+                                    <form onSubmit={handleCommentSubmit} className="space-y-4">
+                                        <div className={`relative rounded-xl border transition-all duration-200 bg-background/50 ${
+                                            activeTab === 'internal'
+                                                ? 'border-orange-500/30 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/10'
+                                                : 'border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10'
+                                        }`}>
+                                            <textarea
+                                                value={commentForm.data.body}
+                                                onChange={(e) => commentForm.setData('body', e.target.value)}
+                                                placeholder={activeTab === 'internal' ? 'Write a private internal note for other admins...' : 'Reply to the customer...'}
+                                                rows={4}
+                                                required
+                                                className="w-full bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-hidden min-h-[100px] resize-none"
+                                            />
+                                            
+                                            <div className="flex items-center justify-between border-t border-border/60 px-4 py-2 bg-muted/20 rounded-b-xl text-[11px] text-muted-foreground">
+                                                <span className="flex items-center gap-1">
+                                                    {activeTab === 'internal' ? (
+                                                        <>
+                                                            <Lock className="size-3 text-orange-500" />
+                                                            Private note: Only visible to support team
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Sparkles className="size-3 text-primary" />
+                                                            Customer reply: Sent directly to client inbox
+                                                        </>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-end gap-2">
                                             <Button 
                                                 type="submit" 
                                                 size="sm" 
-                                                className={`flex items-center gap-1.5 ${
-                                                    activeTab === 'internal' ? 'bg-orange-500 hover:bg-orange-600 text-white' : ''
+                                                className={`flex items-center gap-1.5 transition-all duration-200 px-4 py-2 font-medium cursor-pointer ${
+                                                    activeTab === 'internal' 
+                                                        ? 'bg-orange-500 hover:bg-orange-600 text-white hover:shadow-orange-500/10 hover:shadow-md' 
+                                                        : 'bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-primary/10 hover:shadow-md'
                                                 }`} 
                                                 disabled={commentForm.processing}
                                             >
@@ -400,66 +448,105 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                     </div>
 
                     {/* Right side: Sidebar Metadata Panel */}
-                    <div className="space-y-6">
-                        <Card className="border border-border bg-card/60 backdrop-blur-md shadow-sm rounded-xl">
-                            <CardHeader className="border-b border-border pb-4">
-                                <CardTitle className="text-sm font-semibold">Admin Panel</CardTitle>
-                                <CardDescription>Update status and assignment details dynamically.</CardDescription>
+                    <div className="space-y-4 sm:space-y-6">
+                        {/* Customer Information Card */}
+                        <Card className="border border-border bg-card/60 backdrop-blur-md shadow-xs rounded-2xl overflow-hidden">
+                            <div className="p-4 bg-muted/30 border-b border-border flex items-center gap-3">
+                                <div className="flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold border bg-primary/10 border-primary/20 text-primary select-none shadow-xs">
+                                    {getUserInitials(ticket.user.name)}
+                                </div>
+                                <div className="overflow-hidden">
+                                    <h4 className="text-sm font-bold text-foreground truncate">{ticket.user.name}</h4>
+                                    <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                        <Mail className="size-3 shrink-0" />
+                                        <span className="truncate">{ticket.user.email}</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <CardContent className="p-4 space-y-3">
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-muted-foreground">Account Type</span>
+                                    <Badge variant="secondary" className="capitalize text-[10px] font-semibold py-0.5 px-2">
+                                        {ticket.user.role}
+                                    </Badge>
+                                </div>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="w-full text-xs font-semibold cursor-pointer border-border/80 hover:bg-muted/50" 
+                                    asChild
+                                >
+                                    <a href={`mailto:${ticket.user.email}`}>
+                                        <Mail className="size-3 mr-1.5" />
+                                        Contact Customer
+                                    </a>
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* Ticket Controls Panel */}
+                        <Card className="border border-border bg-card/60 backdrop-blur-md shadow-xs rounded-2xl overflow-hidden">
+                            <CardHeader className="border-b border-border bg-muted/10 pb-4">
+                                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                    <Sparkles className="size-4 text-primary" />
+                                    Ticket Controls
+                                </CardTitle>
+                                <CardDescription className="text-xs">Update priority, assignments, and status.</CardDescription>
                             </CardHeader>
-                            <CardContent className="pt-6 space-y-4">
-                                {/* Status */}
-                                <div className="grid gap-2 border-b border-border/60 pb-4">
-                                    <Label htmlFor="status" className="text-sm text-muted-foreground flex items-center gap-2">
-                                        <Clock className="size-4" />
-                                        Status
+                            <CardContent className="p-4 pt-6 space-y-5">
+                                {/* Status Selection */}
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="status" className="text-xs font-bold text-muted-foreground/90 flex items-center gap-1.5">
+                                        <Clock className="size-3.5 text-muted-foreground/75" />
+                                        Ticket Status
                                     </Label>
                                     <Select value={statusForm.data.status} onValueChange={handleStatusChange}>
-                                        <SelectTrigger id="status">
+                                        <SelectTrigger id="status" className="w-full rounded-xl cursor-pointer">
                                             <SelectValue placeholder="Select Status" />
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="open">Open</SelectItem>
-                                            <SelectItem value="in_progress">In Progress</SelectItem>
-                                            <SelectItem value="waiting">Waiting</SelectItem>
-                                            <SelectItem value="resolved">Resolved</SelectItem>
-                                            <SelectItem value="closed">Closed</SelectItem>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="open" className="cursor-pointer">Open</SelectItem>
+                                            <SelectItem value="in_progress" className="cursor-pointer">In Progress</SelectItem>
+                                            <SelectItem value="waiting" className="cursor-pointer">Waiting</SelectItem>
+                                            <SelectItem value="resolved" className="cursor-pointer">Resolved</SelectItem>
+                                            <SelectItem value="closed" className="cursor-pointer">Closed</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
 
-                                {/* Priority */}
-                                <div className="grid gap-2 border-b border-border/60 pb-4">
-                                    <Label htmlFor="priority" className="text-sm text-muted-foreground flex items-center gap-2">
-                                        <ShieldAlert className="size-4" />
-                                        Priority
+                                {/* Priority Selection */}
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="priority" className="text-xs font-bold text-muted-foreground/90 flex items-center gap-1.5">
+                                        <ShieldAlert className="size-3.5 text-muted-foreground/75" />
+                                        Issue Priority
                                     </Label>
                                     <Select value={priorityForm.data.priority} onValueChange={handlePriorityChange}>
-                                        <SelectTrigger id="priority">
+                                        <SelectTrigger id="priority" className="w-full rounded-xl cursor-pointer">
                                             <SelectValue placeholder="Select Priority" />
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="low">Low</SelectItem>
-                                            <SelectItem value="medium">Medium</SelectItem>
-                                            <SelectItem value="high">High</SelectItem>
-                                            <SelectItem value="critical">Critical</SelectItem>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="low" className="cursor-pointer">Low</SelectItem>
+                                            <SelectItem value="medium" className="cursor-pointer">Medium</SelectItem>
+                                            <SelectItem value="high" className="cursor-pointer">High</SelectItem>
+                                            <SelectItem value="critical" className="cursor-pointer">Critical</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
 
-                                {/* Assignee */}
-                                <div className="grid gap-2 border-b border-border/60 pb-4">
-                                    <Label htmlFor="assigned_to" className="text-sm text-muted-foreground flex items-center gap-2">
-                                        <User className="size-4" />
-                                        Assignee
+                                {/* Assignee Selection */}
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="assigned_to" className="text-xs font-bold text-muted-foreground/90 flex items-center gap-1.5">
+                                        <UserCheck className="size-3.5 text-muted-foreground/75" />
+                                        Assigned Staff
                                     </Label>
                                     <Select value={assigneeForm.data.assigned_to} onValueChange={handleAssigneeChange}>
-                                        <SelectTrigger id="assigned_to">
+                                        <SelectTrigger id="assigned_to" className="w-full rounded-xl cursor-pointer">
                                             <SelectValue placeholder="Assignee" />
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="unassigned" className="cursor-pointer">Unassigned</SelectItem>
                                             {admins.map((admin) => (
-                                                <SelectItem key={admin.id} value={admin.id.toString()}>
+                                                <SelectItem key={admin.id} value={admin.id.toString()} className="cursor-pointer">
                                                     {admin.name}
                                                 </SelectItem>
                                             ))}
@@ -467,26 +554,28 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                                     </Select>
                                 </div>
 
-                                {/* Category */}
-                                <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                                    <span className="text-sm text-muted-foreground flex items-center gap-2">
-                                        <Tag className="size-4" />
-                                        Category
-                                    </span>
-                                    <span className="text-sm font-medium text-foreground">
-                                        {ticket.category?.name || 'General'}
-                                    </span>
-                                </div>
+                                <div className="pt-2 border-t border-border/60 space-y-3">
+                                    {/* Category metadata */}
+                                    <div className="flex items-center justify-between text-xs py-1">
+                                        <span className="text-muted-foreground flex items-center gap-1.5">
+                                            <Tag className="size-3.5 text-muted-foreground/70" />
+                                            Category
+                                        </span>
+                                        <span className="font-semibold text-foreground px-2 py-0.5 bg-muted/60 border border-border/80 rounded-md">
+                                            {ticket.category?.name || 'General'}
+                                        </span>
+                                    </div>
 
-                                {/* Submitted at */}
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-muted-foreground flex items-center gap-2">
-                                        <Calendar className="size-4" />
-                                        Submitted
-                                    </span>
-                                    <span className="text-sm font-medium text-foreground">
-                                        {new Date(ticket.created_at).toLocaleDateString()}
-                                    </span>
+                                    {/* Submitted timestamp */}
+                                    <div className="flex items-center justify-between text-xs py-1">
+                                        <span className="text-muted-foreground flex items-center gap-1.5">
+                                            <Calendar className="size-3.5 text-muted-foreground/70" />
+                                            Submitted
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {formatDate(ticket.created_at)}
+                                        </span>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
