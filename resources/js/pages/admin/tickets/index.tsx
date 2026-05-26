@@ -1,14 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
-    ArrowUpDown,
     CheckCircle2,
     Clock,
-    Filter,
     FolderSearch,
-    Inbox,
     RefreshCw,
     Search,
+    Ticket,
     User,
     XCircle,
 } from 'lucide-react';
@@ -127,26 +125,51 @@ function formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function StatCard({
-    label,
-    value,
-    dotColor,
-    accent,
-}: {
+interface StatCardConfig {
     label: string;
     value: number;
-    dotColor?: string;
-    accent?: boolean;
-}) {
+    total?: number;
+    icon: React.ElementType;
+    gradient: string;
+    iconColor: string;
+    numColor: string;
+    bar: string;
+}
+
+function StatCard({ label, value, total, icon: Icon, gradient, iconColor, numColor, bar }: StatCardConfig) {
+    const pct = total && total > 0 ? Math.round((value / total) * 100) : 100;
+
     return (
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center gap-1.5">
-                {dotColor && <span className={`inline-block size-2 rounded-full ${dotColor}`} />}
-                <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">{label}</span>
+        <div
+            className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${gradient}`}
+        >
+            {/* Decorative blurred circle */}
+            <span
+                className={`pointer-events-none absolute -right-4 -top-4 size-24 rounded-full opacity-20 blur-2xl ${iconColor.replace('text-', 'bg-')}`}
+            />
+
+            {/* Top row: label + icon */}
+            <div className="flex items-start justify-between">
+                <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+                    {label}
+                </span>
+                <span className={`flex size-8 items-center justify-center rounded-lg bg-white/60 dark:bg-black/20 ${iconColor}`}>
+                    <Icon className="size-4" strokeWidth={1.75} />
+                </span>
             </div>
-            <span className={`text-3xl font-bold tracking-tight ${accent ? 'text-primary' : 'text-foreground'}`}>
-                {value}
-            </span>
+
+            {/* Number */}
+            <div className="mt-3">
+                <span className={`text-4xl font-bold tracking-tight ${numColor}`}>{value}</span>
+            </div>
+
+            {/* Progress bar */}
+            <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-black/8 dark:bg-white/10">
+                <div
+                    className={`h-full rounded-full transition-all duration-500 ${bar}`}
+                    style={{ width: `${pct}%` }}
+                />
+            </div>
         </div>
     );
 }
@@ -199,11 +222,55 @@ export default function AdminTicketsIndex({ tickets, stats, categories, admins, 
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                    <StatCard label="Total" value={stats.total} accent />
-                    <StatCard label="Open" value={stats.open} dotColor="bg-blue-500" />
-                    <StatCard label="In Progress" value={stats.in_progress} dotColor="bg-amber-500" />
-                    <StatCard label="Resolved" value={stats.resolved} dotColor="bg-emerald-500" />
-                    <StatCard label="Closed" value={stats.closed} dotColor="bg-slate-400" />
+                    <StatCard
+                        label="Total Tickets"
+                        value={stats.total}
+                        icon={Ticket}
+                        gradient="bg-gradient-to-br from-orange-50 to-amber-100/60 dark:from-orange-950/40 dark:to-amber-900/20"
+                        iconColor="text-primary"
+                        numColor="text-primary"
+                        bar="bg-primary"
+                    />
+                    <StatCard
+                        label="Open"
+                        value={stats.open}
+                        total={stats.total}
+                        icon={AlertCircle}
+                        gradient="bg-gradient-to-br from-blue-50 to-sky-100/60 dark:from-blue-950/40 dark:to-sky-900/20"
+                        iconColor="text-blue-500"
+                        numColor="text-blue-600 dark:text-blue-400"
+                        bar="bg-blue-500"
+                    />
+                    <StatCard
+                        label="In Progress"
+                        value={stats.in_progress}
+                        total={stats.total}
+                        icon={Clock}
+                        gradient="bg-gradient-to-br from-amber-50 to-yellow-100/60 dark:from-amber-950/40 dark:to-yellow-900/20"
+                        iconColor="text-amber-500"
+                        numColor="text-amber-600 dark:text-amber-400"
+                        bar="bg-amber-500"
+                    />
+                    <StatCard
+                        label="Resolved"
+                        value={stats.resolved}
+                        total={stats.total}
+                        icon={CheckCircle2}
+                        gradient="bg-gradient-to-br from-emerald-50 to-green-100/60 dark:from-emerald-950/40 dark:to-green-900/20"
+                        iconColor="text-emerald-500"
+                        numColor="text-emerald-600 dark:text-emerald-400"
+                        bar="bg-emerald-500"
+                    />
+                    <StatCard
+                        label="Closed"
+                        value={stats.closed}
+                        total={stats.total}
+                        icon={XCircle}
+                        gradient="bg-gradient-to-br from-slate-50 to-slate-100/60 dark:from-slate-900/40 dark:to-slate-800/20"
+                        iconColor="text-slate-400"
+                        numColor="text-slate-500"
+                        bar="bg-slate-400"
+                    />
                 </div>
 
                 {/* Filters */}
