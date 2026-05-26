@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['user_id', 'category_id', 'assigned_to', 'title', 'description', 'status', 'priority', 'resolved_at', 'closed_at'])]
+#[Fillable(['user_id', 'category_id', 'assigned_to', 'title', 'description', 'status', 'priority', 'resolved_at', 'closed_at', 'code'])]
 class Ticket extends Model
 {
     /** @use HasFactory<TicketFactory> */
@@ -25,6 +25,19 @@ class Ticket extends Model
         'status' => 'open',
         'priority' => 'medium',
     ];
+
+    /**
+     * Bootstrap the model.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Ticket $ticket): void {
+            if (empty($ticket->code)) {
+                $next = static::count() + 1;
+                $ticket->code = 'TIC-'.str_pad($next, 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.

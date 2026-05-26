@@ -32,6 +32,7 @@ interface User {
 
 interface Ticket {
     id: string;
+    code: string;
     title: string;
     description: string;
     status: 'open' | 'in_progress' | 'waiting' | 'resolved' | 'closed';
@@ -256,8 +257,8 @@ export default function TicketsIndex({ tickets, categories, filters }: Props) {
                                 >
                                     <div className="space-y-2 max-w-2xl">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <span className="text-xs text-muted-foreground font-mono">
-                                                #{ticket.id.substring(0, 8)}
+                                            <span className="text-xs text-primary font-mono font-semibold">
+                                                {ticket.code ?? `#${ticket.id.substring(0, 8)}`}
                                             </span>
                                             <Badge variant="outline" className="px-2 py-0 text-xs">
                                                 {ticket.category?.name || 'General'}

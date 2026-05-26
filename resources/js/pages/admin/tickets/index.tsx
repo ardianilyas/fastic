@@ -1,13 +1,24 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Search, Inbox, AlertCircle, Clock, CheckCircle2, User, ArrowRight, RefreshCw, FolderSearch } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import {
+    AlertCircle,
+    ArrowUpDown,
+    CheckCircle2,
+    Clock,
+    Filter,
+    FolderSearch,
+    Inbox,
+    RefreshCw,
+    Search,
+    User,
+    XCircle,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import Heading from '@/components/heading';
 import { Pagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import adminTicketsRoute from '@/routes/admin/tickets';
 
 interface Category {
@@ -15,7 +26,7 @@ interface Category {
     name: string;
 }
 
-interface User {
+interface TicketUser {
     id: number;
     name: string;
     email: string;
@@ -23,14 +34,15 @@ interface User {
 
 interface Ticket {
     id: string;
+    code: string;
     title: string;
     description: string;
     status: 'open' | 'in_progress' | 'waiting' | 'resolved' | 'closed';
     priority: 'low' | 'medium' | 'high' | 'critical';
     created_at: string;
     category: Category | null;
-    user: User;
-    assignee: User | null;
+    user: TicketUser;
+    assignee: TicketUser | null;
 }
 
 interface PaginatedData<T> {
@@ -56,7 +68,7 @@ interface Props {
         closed: number;
     };
     categories: Category[];
-    admins: User[];
+    admins: TicketUser[];
     filters: {
         search: string | null;
         status: string | null;
@@ -66,12 +78,87 @@ interface Props {
     };
 }
 
+const STATUS_CONFIG = {
+    open: {
+        label: 'Open',
+        icon: AlertCircle,
+        color: 'text-blue-600 dark:text-blue-400',
+        bg: 'bg-blue-500/8 text-blue-600 dark:text-blue-400',
+        dot: 'bg-blue-500',
+    },
+    in_progress: {
+        label: 'In Progress',
+        icon: Clock,
+        color: 'text-amber-600 dark:text-amber-400',
+        bg: 'bg-amber-500/8 text-amber-600 dark:text-amber-400',
+        dot: 'bg-amber-500',
+    },
+    waiting: {
+        label: 'Waiting',
+        icon: Clock,
+        color: 'text-purple-600 dark:text-purple-400',
+        bg: 'bg-purple-500/8 text-purple-600 dark:text-purple-400',
+        dot: 'bg-purple-500',
+    },
+    resolved: {
+        label: 'Resolved',
+        icon: CheckCircle2,
+        color: 'text-emerald-600 dark:text-emerald-400',
+        bg: 'bg-emerald-500/8 text-emerald-600 dark:text-emerald-400',
+        dot: 'bg-emerald-500',
+    },
+    closed: {
+        label: 'Closed',
+        icon: XCircle,
+        color: 'text-slate-500',
+        bg: 'bg-slate-500/8 text-slate-500',
+        dot: 'bg-slate-400',
+    },
+} as const;
+
+const PRIORITY_CONFIG = {
+    low: { label: 'Low', style: 'text-slate-500 bg-slate-500/8' },
+    medium: { label: 'Medium', style: 'text-sky-600 bg-sky-500/8 dark:text-sky-400' },
+    high: { label: 'High', style: 'text-orange-600 bg-orange-500/8 dark:text-orange-400' },
+    critical: { label: 'Critical', style: 'text-red-600 bg-red-500/8 font-semibold dark:text-red-400' },
+} as const;
+
+function formatDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function StatCard({
+    label,
+    value,
+    dotColor,
+    accent,
+}: {
+    label: string;
+    value: number;
+    dotColor?: string;
+    accent?: boolean;
+}) {
+    return (
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-1.5">
+                {dotColor && <span className={`inline-block size-2 rounded-full ${dotColor}`} />}
+                <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">{label}</span>
+            </div>
+            <span className={`text-3xl font-bold tracking-tight ${accent ? 'text-primary' : 'text-foreground'}`}>
+                {value}
+            </span>
+        </div>
+    );
+}
+
 export default function AdminTicketsIndex({ tickets, stats, categories, admins, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
     const [priority, setPriority] = useState(filters.priority || 'all');
     const [categoryId, setCategoryId] = useState(filters.category_id || 'all');
     const [assignedTo, setAssignedTo] = useState(filters.assigned_to || 'all');
+
+    const hasFilters = search || status !== 'all' || priority !== 'all' || categoryId !== 'all' || assignedTo !== 'all';
 
     const applyFilters = () => {
         router.get(
@@ -83,19 +170,13 @@ export default function AdminTicketsIndex({ tickets, stats, categories, admins, 
                 category_id: categoryId !== 'all' ? categoryId : undefined,
                 assigned_to: assignedTo !== 'all' ? assignedTo : undefined,
             },
-            {
-                preserveState: true,
-                replace: true,
-            }
+            { preserveState: true, replace: true },
         );
     };
 
     useEffect(() => {
-        const delayDebounce = setTimeout(() => {
-            applyFilters();
-        }, 300);
-
-        return () => clearTimeout(delayDebounce);
+        const timer = setTimeout(applyFilters, 300);
+        return () => clearTimeout(timer);
     }, [search, status, priority, categoryId, assignedTo]);
 
     const handleClearFilters = () => {
@@ -106,276 +187,209 @@ export default function AdminTicketsIndex({ tickets, stats, categories, admins, 
         setAssignedTo('all');
     };
 
-    const getStatusIcon = (status: Ticket['status']) => {
-        switch (status) {
-            case 'open':
-                return <AlertCircle className="size-3.5" />;
-            case 'in_progress':
-                return <Clock className="size-3.5" />;
-            case 'resolved':
-            case 'closed':
-                return <CheckCircle2 className="size-3.5" />;
-            default:
-                return <Clock className="size-3.5" />;
-        }
-    };
-
-    const getStatusStyle = (status: Ticket['status']) => {
-        switch (status) {
-            case 'open':
-                return 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/10';
-            case 'in_progress':
-                return 'bg-amber-500/10 text-amber-500 hover:bg-amber-500/10';
-            case 'resolved':
-                return 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10';
-            case 'closed':
-                return 'bg-slate-500/10 text-slate-500 hover:bg-slate-500/10';
-            default:
-                return '';
-        }
-    };
-
-    const getPriorityStyle = (priority: Ticket['priority']) => {
-        switch (priority) {
-            case 'low':
-                return 'bg-slate-500/10 text-slate-500';
-            case 'medium':
-                return 'bg-blue-500/10 text-blue-500';
-            case 'high':
-                return 'bg-orange-500/10 text-orange-500';
-            case 'critical':
-                return 'bg-red-500/10 text-red-500 font-semibold animate-pulse';
-            default:
-                return '';
-        }
-    };
-
     return (
         <>
             <Head title="Ticket Control Center" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <Heading
-                        title="Support Ticket Control Board"
-                        description="Monitor, assign, and manage all support requests across Fastic."
-                    />
+                <Heading
+                    title="Support Ticket Control Board"
+                    description="Monitor, assign, and manage all support requests across Fastic."
+                />
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    <StatCard label="Total" value={stats.total} accent />
+                    <StatCard label="Open" value={stats.open} dotColor="bg-blue-500" />
+                    <StatCard label="In Progress" value={stats.in_progress} dotColor="bg-amber-500" />
+                    <StatCard label="Resolved" value={stats.resolved} dotColor="bg-emerald-500" />
+                    <StatCard label="Closed" value={stats.closed} dotColor="bg-slate-400" />
                 </div>
 
-                {/* Counters / Stats cards */}
-                <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
-                    {/* Total */}
-                    <Card className="border border-border bg-card/65 shadow-xs rounded-xl">
-                        <CardContent className="p-4 flex flex-col justify-center">
-                            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Tickets</span>
-                            <span className="text-2xl font-bold mt-1 text-foreground">{stats.total}</span>
-                        </CardContent>
-                    </Card>
-
-                    {/* Open */}
-                    <Card className="border border-border bg-card/65 shadow-xs rounded-xl">
-                        <CardContent className="p-4 flex flex-col justify-center">
-                            <span className="text-xs text-blue-500 font-medium uppercase tracking-wider flex items-center gap-1">
-                                <span className="size-1.5 rounded-full bg-blue-500" />
-                                Open
-                            </span>
-                            <span className="text-2xl font-bold mt-1 text-foreground">{stats.open}</span>
-                        </CardContent>
-                    </Card>
-
-                    {/* In Progress */}
-                    <Card className="border border-border bg-card/65 shadow-xs rounded-xl">
-                        <CardContent className="p-4 flex flex-col justify-center">
-                            <span className="text-xs text-amber-500 font-medium uppercase tracking-wider flex items-center gap-1">
-                                <span className="size-1.5 rounded-full bg-amber-500" />
-                                In Progress
-                            </span>
-                            <span className="text-2xl font-bold mt-1 text-foreground">{stats.in_progress}</span>
-                        </CardContent>
-                    </Card>
-
-                    {/* Resolved */}
-                    <Card className="border border-border bg-card/65 shadow-xs rounded-xl">
-                        <CardContent className="p-4 flex flex-col justify-center">
-                            <span className="text-xs text-emerald-500 font-medium uppercase tracking-wider flex items-center gap-1">
-                                <span className="size-1.5 rounded-full bg-emerald-500" />
-                                Resolved
-                            </span>
-                            <span className="text-2xl font-bold mt-1 text-foreground">{stats.resolved}</span>
-                        </CardContent>
-                    </Card>
-
-                    {/* Closed */}
-                    <Card className="border border-border bg-card/65 shadow-xs rounded-xl">
-                        <CardContent className="p-4 flex flex-col justify-center">
-                            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider flex items-center gap-1">
-                                <span className="size-1.5 rounded-full bg-slate-500" />
-                                Closed
-                            </span>
-                            <span className="text-2xl font-bold mt-1 text-foreground">{stats.closed}</span>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Filters Board */}
-                <div className="flex flex-col gap-2 bg-card/40 border border-border p-4 rounded-xl">
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                {/* Filters */}
+                <div className="rounded-xl border border-border bg-card/60 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
                         {/* Search */}
-                        <div className="relative lg:col-span-1">
-                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <div className="relative min-w-48 flex-1">
+                            <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 type="text"
-                                placeholder="Search by title, desc, user..."
+                                placeholder="Search ticket, code, user…"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-10 w-full"
+                                className="h-8 pl-8 text-sm"
                             />
                         </div>
 
                         {/* Status */}
-                        <div>
-                            <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Status: All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Status: All</SelectItem>
-                                    <SelectItem value="open">Open</SelectItem>
-                                    <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="resolved">Resolved</SelectItem>
-                                    <SelectItem value="closed">Closed</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Select value={status} onValueChange={setStatus}>
+                            <SelectTrigger className="h-8 w-36 text-sm">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Status</SelectItem>
+                                <SelectItem value="open">Open</SelectItem>
+                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                <SelectItem value="waiting">Waiting</SelectItem>
+                                <SelectItem value="resolved">Resolved</SelectItem>
+                                <SelectItem value="closed">Closed</SelectItem>
+                            </SelectContent>
+                        </Select>
 
                         {/* Priority */}
-                        <div>
-                            <Select value={priority} onValueChange={setPriority}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Priority: All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Priority: All</SelectItem>
-                                    <SelectItem value="low">Low</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="high">High</SelectItem>
-                                    <SelectItem value="critical">Critical</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Select value={priority} onValueChange={setPriority}>
+                            <SelectTrigger className="h-8 w-36 text-sm">
+                                <SelectValue placeholder="Priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Priority</SelectItem>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="critical">Critical</SelectItem>
+                            </SelectContent>
+                        </Select>
 
                         {/* Category */}
-                        <div>
-                            <Select value={categoryId} onValueChange={setCategoryId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Category: All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Category: All</SelectItem>
-                                    {categories.map((c) => (
-                                        <SelectItem key={c.id} value={c.id}>
-                                            {c.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Select value={categoryId} onValueChange={setCategoryId}>
+                            <SelectTrigger className="h-8 w-36 text-sm">
+                                <SelectValue placeholder="Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Categories</SelectItem>
+                                {categories.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                        {c.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
 
                         {/* Assignee */}
-                        <div>
-                            <Select value={assignedTo} onValueChange={setAssignedTo}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Assignee: All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Assignee: All</SelectItem>
-                                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                                    {admins.map((a) => (
-                                        <SelectItem key={a.id} value={a.id.toString()}>
-                                            {a.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                        <Select value={assignedTo} onValueChange={setAssignedTo}>
+                            <SelectTrigger className="h-8 w-36 text-sm">
+                                <SelectValue placeholder="Assignee" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Assignees</SelectItem>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                {admins.map((a) => (
+                                    <SelectItem key={a.id} value={a.id.toString()}>
+                                        {a.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
 
-                    {(search || status !== 'all' || priority !== 'all' || categoryId !== 'all' || assignedTo !== 'all') && (
-                        <div className="flex items-center justify-end">
-                            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-xs h-7 flex items-center gap-1">
+                        {/* Clear button — inline */}
+                        {hasFilters && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleClearFilters}
+                                className="h-8 gap-1.5 px-2.5 text-xs text-primary hover:bg-primary/8 hover:text-primary"
+                            >
                                 <RefreshCw className="size-3" />
-                                Clear Filters
+                                Clear
                             </Button>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
-                {/* Tickets list */}
+                {/* Tickets Table */}
                 {tickets.data.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border p-16 text-center bg-card/25">
-                        <FolderSearch className="size-12 text-muted-foreground/60 mb-4" />
-                        <h3 className="text-lg font-semibold">No tickets found</h3>
-                        <p className="text-sm text-muted-foreground max-w-xs mt-1">
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/25 p-16 text-center">
+                        <FolderSearch className="mb-4 size-12 text-muted-foreground/50" />
+                        <h3 className="text-base font-semibold">No tickets found</h3>
+                        <p className="mt-1 max-w-xs text-sm text-muted-foreground">
                             No tickets match your filter criteria. Try expanding your search scope.
                         </p>
                     </div>
                 ) : (
                     <>
-                        <div className="flex flex-col gap-3">
-                            {tickets.data.map((ticket) => (
-                                <Link
-                                    key={ticket.id}
-                                    href={adminTicketsRoute.show.url(ticket.id)}
-                                    className="group flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-border bg-card/60 backdrop-blur-md p-5 transition-all duration-200 hover:border-sidebar-border hover:shadow-sm"
-                                >
-                                    <div className="space-y-2 max-w-2xl">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className="text-xs text-muted-foreground font-mono">
-                                                #{ticket.id.substring(0, 8)}
-                                            </span>
-                                            <Badge variant="outline" className="px-2 py-0 text-xs">
-                                                {ticket.category?.name || 'General'}
-                                            </Badge>
-                                            <Badge variant="outline" className={`px-2 py-0 text-xs ${getPriorityStyle(ticket.priority)}`}>
-                                                {ticket.priority}
-                                            </Badge>
-                                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                <User className="size-3" />
-                                                By {ticket.user.name}
-                                            </span>
-                                        </div>
+                        {/* Table header */}
+                        <div className="overflow-hidden rounded-xl border border-border bg-card">
+                            {/* Header row */}
+                            <div className="grid grid-cols-[7rem_1fr_7rem_7rem_9rem_8rem] items-center border-b border-border bg-muted/40 px-4 py-2 text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
+                                <span>Code</span>
+                                <span>Ticket</span>
+                                <span>Status</span>
+                                <span>Priority</span>
+                                <span>Assignee</span>
+                                <span className="text-right">Created</span>
+                            </div>
 
-                                        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-base">
-                                            {ticket.title}
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground line-clamp-1">
-                                            {ticket.description}
-                                        </p>
-                                    </div>
+                            {/* Rows */}
+                            <div className="divide-y divide-border">
+                                {tickets.data.map((ticket) => {
+                                    const statusCfg = STATUS_CONFIG[ticket.status] ?? STATUS_CONFIG.open;
+                                    const priorityCfg = PRIORITY_CONFIG[ticket.priority] ?? PRIORITY_CONFIG.medium;
+                                    const StatusIcon = statusCfg.icon;
 
-                                    <div className="mt-4 sm:mt-0 flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 border-border pt-3 sm:pt-0">
-                                        <div className="flex flex-col items-start sm:items-end gap-1.5">
-                                            <Badge className={`flex items-center gap-1 font-medium capitalize text-xs ${getStatusStyle(ticket.status)}`}>
-                                                {getStatusIcon(ticket.status)}
-                                                {ticket.status.replace('_', ' ')}
-                                            </Badge>
-                                            <span className="text-xs text-muted-foreground">
-                                                Assignee:{' '}
-                                                <span className="font-semibold text-foreground">
-                                                    {ticket.assignee ? ticket.assignee.name : 'Unassigned'}
+                                    return (
+                                        <Link
+                                            key={ticket.id}
+                                            href={adminTicketsRoute.show.url(ticket.id)}
+                                            className="group grid grid-cols-[7rem_1fr_7rem_7rem_9rem_8rem] items-center px-4 py-3 transition-colors duration-150 hover:bg-muted/30"
+                                        >
+                                            {/* Code */}
+                                            <span className="font-mono text-xs font-semibold text-primary">
+                                                {ticket.code || `#${ticket.id.substring(0, 6)}`}
+                                            </span>
+
+                                            {/* Title + meta */}
+                                            <div className="flex min-w-0 flex-col gap-0.5 pr-4">
+                                                <span className="truncate text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                                                    {ticket.title}
                                                 </span>
+                                                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                    <User className="size-3 shrink-0" />
+                                                    <span className="truncate">{ticket.user.name}</span>
+                                                    {ticket.category && (
+                                                        <>
+                                                            <span>·</span>
+                                                            <span className="truncate">{ticket.category.name}</span>
+                                                        </>
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            {/* Status */}
+                                            <span
+                                                className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${statusCfg.bg}`}
+                                            >
+                                                <StatusIcon className="size-3 shrink-0" />
+                                                {statusCfg.label}
                                             </span>
-                                        </div>
-                                        <ArrowRight className="size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-1 hidden sm:block" />
-                                    </div>
-                                </Link>
-                            ))}
+
+                                            {/* Priority */}
+                                            <span
+                                                className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${priorityCfg.style}`}
+                                            >
+                                                {priorityCfg.label}
+                                            </span>
+
+                                            {/* Assignee */}
+                                            <span className="truncate text-xs text-muted-foreground">
+                                                {ticket.assignee ? (
+                                                    <span className="font-medium text-foreground">{ticket.assignee.name}</span>
+                                                ) : (
+                                                    <span className="italic text-muted-foreground/60">Unassigned</span>
+                                                )}
+                                            </span>
+
+                                            {/* Created date */}
+                                            <span className="text-right text-xs text-muted-foreground">
+                                                {formatDate(ticket.created_at)}
+                                            </span>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
                         </div>
 
-                        {/* Pagination component */}
-                        <div className="mt-4">
-                            <Pagination links={tickets.links} />
-                        </div>
+                        {/* Pagination */}
+                        <Pagination links={tickets.links} />
                     </>
                 )}
             </div>

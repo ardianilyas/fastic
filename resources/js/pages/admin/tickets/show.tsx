@@ -43,6 +43,7 @@ interface TimelineEvent {
 
 interface Ticket {
     id: string;
+    code: string;
     title: string;
     description: string;
     status: 'open' | 'in_progress' | 'waiting' | 'resolved' | 'closed';
@@ -207,7 +208,7 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
 
     return (
         <>
-            <Head title={`Ticket #${ticket.id.substring(0, 8)} - Admin Dashboard`} />
+            <Head title={`${ticket.code ?? ticket.id.substring(0, 8)} - Admin Dashboard`} />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 <div className="flex items-center gap-2">
@@ -216,14 +217,16 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                             <ArrowLeft className="size-4" />
                         </Link>
                     </Button>
-                    <span className="text-sm text-muted-foreground">Back to all tickets list</span>
+                    <span className="text-sm text-muted-foreground">Back to all tickets</span>
                 </div>
 
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-muted-foreground">
-                            Ticket Reference: #{ticket.id}
+                        <span className="font-mono text-sm font-semibold text-primary">
+                            {ticket.code ?? `#${ticket.id.substring(0, 8)}`}
                         </span>
+                        <span className="text-muted-foreground">/</span>
+                        <span className="text-xs text-muted-foreground font-mono">{ticket.id}</span>
                     </div>
                     <Heading
                         title={ticket.title}
