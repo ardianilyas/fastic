@@ -1,3 +1,7 @@
+import { Head, useForm } from '@inertiajs/react';
+import { Check, Edit2, Plus, Search, Tags, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import Heading from '@/components/heading';
 import { Pagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
@@ -15,10 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import categoriesRoute from '@/routes/admin/categories';
-import { Head, useForm } from '@inertiajs/react';
-import { Check, Edit2, Plus, Search, Tags, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
+
 
 interface Category {
     id: string;
@@ -65,6 +66,7 @@ export default function CategoriesIndex({ categories }: Props) {
     // Filter categories (client-side of currently paginated items)
     const filteredCategories = categories.data.filter((category) => {
         const query = searchQuery.toLowerCase();
+
         return (
             category.name.toLowerCase().includes(query) ||
             (category.description?.toLowerCase() || '').includes(query)
@@ -138,7 +140,10 @@ export default function CategoriesIndex({ categories }: Props) {
 
     const handleDeleteSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!deletingCategory) return;
+
+        if (!deletingCategory) {
+            return;
+        }
 
         // Using Wayfinder routes instead of Ziggy global route helper to fix the frontend bug
         deleteForm.delete(categoriesRoute.destroy.url(deletingCategory.id), {
@@ -227,7 +232,7 @@ export default function CategoriesIndex({ categories }: Props) {
                                             </Badge>
                                         </div>
 
-                                        <p className="text-sm text-muted-foreground line-clamp-3 min-h-[40px]">
+                                        <p className="text-sm text-muted-foreground line-clamp-3 min-h-10">
                                             {category.description || 'No description provided.'}
                                         </p>
                                     </div>
@@ -272,7 +277,7 @@ export default function CategoriesIndex({ categories }: Props) {
 
             {/* Save Modal Dialog (Create & Update) */}
             <Dialog open={isSaveOpen} onOpenChange={setIsSaveOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-106.25">
                     <form onSubmit={handleSaveSubmit}>
                         <DialogHeader>
                             <DialogTitle>{editingCategory ? 'Edit Category' : 'Create Category'}</DialogTitle>
@@ -345,7 +350,7 @@ export default function CategoriesIndex({ categories }: Props) {
 
             {/* Delete Modal Confirmation Dialog */}
             <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <DialogContent className="sm:max-w-[400px]">
+                <DialogContent className="sm:max-w-100">
                     <form onSubmit={handleDeleteSubmit}>
                         <DialogHeader>
                             <DialogTitle className="text-destructive">Delete Category</DialogTitle>

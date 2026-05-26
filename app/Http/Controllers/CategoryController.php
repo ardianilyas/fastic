@@ -15,7 +15,7 @@ class CategoryController extends Controller
      */
     public function index(): Response
     {
-        $categories = Category::orderBy('name')
+        $categories = Category::orderBy('name', 'desc')
             ->paginate(6, ['id', 'name', 'description', 'is_active', 'created_at']);
 
         return Inertia::render('admin/categories/index', [
@@ -50,7 +50,7 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category): RedirectResponse
     {
-        $category->delete();
+        $category->delete($category->id);
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Category deleted successfully.');
