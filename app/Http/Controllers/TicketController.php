@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Ticket;
 use App\Models\TicketTimeline;
+use App\Services\TicketNotificationService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -77,7 +78,7 @@ class TicketController extends Controller
     /**
      * Store a newly created ticket in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, TicketNotificationService $notificationService): RedirectResponse
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -103,6 +104,8 @@ class TicketController extends Controller
             'new_value' => 'open',
             'description' => 'Ticket was created and submitted.',
         ]);
+
+        $notificationService->notifyAdminsOfNewTicket($ticket);
 
         return redirect()->route('tickets.show', $ticket->id)
             ->with('success', 'Ticket has been successfully created.');

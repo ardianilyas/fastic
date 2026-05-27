@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Ticket;
 use App\Models\TicketTimeline;
+use App\Services\TicketNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +16,7 @@ class TicketCommentController extends Controller
     /**
      * Store a newly created comment/internal note on a ticket.
      */
-    public function store(Request $request, Ticket $ticket): RedirectResponse
+    public function store(Request $request, Ticket $ticket, TicketNotificationService $notificationService): RedirectResponse
     {
         Gate::authorize('comment', $ticket);
 
@@ -40,6 +41,8 @@ class TicketCommentController extends Controller
                 ? 'Admin posted an internal note.'
                 : 'Admin posted a public response.',
         ]);
+
+        $notificationService->notifyStakeholdersOfNewComment($comment);
 
         return redirect()->route('admin.tickets.show', $ticket->id)
             ->with('success', $validated['is_internal'] ? 'Internal note added.' : 'Reply posted successfully.');

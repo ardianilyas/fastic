@@ -8,6 +8,19 @@ export type User = {
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
+    unreadNotificationsCount?: number;
+    notifications?: Array<{
+        id: string;
+        data: {
+            ticket_id: string;
+            ticket_code: string;
+            ticket_title: string;
+            message: string;
+            type: 'created' | 'assigned' | 'status_changed' | 'comment_added';
+        };
+        read_at: string | null;
+        created_at: string;
+    }>;
     [key: string]: unknown;
 };
 

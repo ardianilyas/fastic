@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Ticket;
 use App\Models\TicketTimeline;
 use App\Models\User;
+use App\Services\TicketNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -113,7 +114,7 @@ class TicketController extends Controller
     /**
      * Update the specified ticket's properties (status, priority, assignment).
      */
-    public function update(Request $request, Ticket $ticket): RedirectResponse
+    public function update(Request $request, Ticket $ticket, TicketNotificationService $notificationService): RedirectResponse
     {
         Gate::authorize('update', $ticket);
 
@@ -123,10 +124,13 @@ class TicketController extends Controller
             'assigned_to' => 'sometimes|nullable|exists:users,id',
         ]);
 
+        $statusChanged = false;
+        $oldStatus = $ticket->status;
+
         // Status Update & Timeline Logging
         if (isset($validated['status']) && $validated['status'] !== $ticket->status) {
-            $oldStatus = $ticket->status;
             $ticket->status = $validated['status'];
+            $statusChanged = true;
 
             if ($validated['status'] === 'resolved') {
                 $ticket->resolved_at = now();
@@ -159,12 +163,15 @@ class TicketController extends Controller
             ]);
         }
 
+        $assignmentChanged = false;
+
         // Assignment Update & Timeline Logging
         if (array_key_exists('assigned_to', $validated) && $validated['assigned_to'] !== $ticket->assigned_to) {
             $oldAssigneeId = $ticket->assigned_to;
             $newAssigneeId = $validated['assigned_to'];
 
             $ticket->assigned_to = $newAssigneeId;
+            $assignmentChanged = $newAssigneeId !== null;
 
             $oldName = $oldAssigneeId ? User::find($oldAssigneeId)?->name : 'Unassigned';
             $newName = $newAssigneeId ? User::find($newAssigneeId)?->name : 'Unassigned';
@@ -182,6 +189,15 @@ class TicketController extends Controller
         }
 
         $ticket->save();
+
+        // Dispatch notifications after saving to ensure db consistency
+        if ($statusChanged) {
+            $notificationService->notifyCreatorOfStatusChange($ticket, $oldStatus, $validated['status']);
+        }
+
+        if ($assignmentChanged) {
+            $notificationService->notifyAssigneeOfAssignment($ticket);
+        }
 
         return redirect()->route('admin.tickets.show', $ticket->id)
             ->with('success', 'Ticket properties updated successfully.');
