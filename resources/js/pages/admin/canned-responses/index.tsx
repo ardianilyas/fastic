@@ -158,9 +158,9 @@ export default function CannedResponsesIndex({ cannedResponses }: Props) {
     );
 
     return (
-        <AppLayout breadcrumbs={CannedResponsesIndex.layout.breadcrumbs}>
+        <>
             <Head title="Canned Responses Management" />
-            <div className="flex flex-col gap-6 px-6 py-6">
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 {/* Page Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-6">
                     <Heading
@@ -443,7 +443,7 @@ export default function CannedResponsesIndex({ cannedResponses }: Props) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </AppLayout>
+        </>
     );
 }
 
