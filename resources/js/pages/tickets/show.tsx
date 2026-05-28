@@ -246,36 +246,44 @@ export default function TicketsShow({ ticket }: Props) {
                                         return (
                                             <div
                                                 key={log.id}
-                                                className={`flex gap-2 sm:gap-3 max-w-[95%] sm:max-w-[85%] ${
+                                                className={`flex gap-3 max-w-[85%] items-end ${
                                                     isCreator ? 'mr-auto' : 'ml-auto flex-row-reverse'
                                                 }`}
                                             >
-                                                {/* Initials Avatar - hidden on very small screens */}
-                                                <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold border select-none ${
+                                                {/* Initials Avatar */}
+                                                <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold border select-none shadow-xs transition-all duration-200 hover:rotate-6 ${
                                                     isCreator 
-                                                        ? 'bg-secondary border-border text-secondary-foreground' 
+                                                        ? 'bg-muted border-border/80 text-foreground' 
                                                         : 'bg-primary/10 border-primary/20 text-primary'
                                                 }`}>
                                                     {getUserInitials(comment.user.name)}
                                                 </div>
 
-                                                <div className={`space-y-1 p-4 rounded-xl border ${
-                                                    isCreator 
-                                                        ? 'bg-muted rounded-tl-none border-border' 
-                                                        : 'bg-primary/5 rounded-tr-none border-primary/10'
-                                                }`}>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`text-sm font-semibold ${isCreator ? 'text-foreground' : 'text-primary'}`}>
-                                                            {isCreator ? 'You' : `${comment.user.name} (Support)`}
+                                                {isCreator ? (
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        <span className="text-[10px] text-muted-foreground/80 font-medium px-1">
+                                                            You
                                                         </span>
-                                                        <span className="text-xs text-muted-foreground font-mono">
+                                                        <div className="p-3.5 px-4 bg-muted/65 dark:bg-muted/40 border border-border/80 rounded-2xl rounded-tl-xs text-sm text-foreground shadow-xs leading-relaxed whitespace-pre-wrap hover:scale-[1.005] hover:shadow-xs transition-all duration-200">
+                                                            {comment.body}
+                                                        </div>
+                                                        <span className="text-[9px] text-muted-foreground/60 px-1 font-mono">
                                                             {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                     </div>
-                                                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                                                        {comment.body}
-                                                    </p>
-                                                </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className="text-[10px] text-primary font-semibold px-1">
+                                                            {comment.user.name} (Support)
+                                                        </span>
+                                                        <div className="p-3.5 px-4 bg-gradient-to-br from-primary to-primary-active text-white rounded-2xl rounded-tr-xs text-sm shadow-xs leading-relaxed whitespace-pre-wrap hover:scale-[1.005] hover:shadow-xs transition-all duration-200 border-none">
+                                                            {comment.body}
+                                                        </div>
+                                                        <span className="text-[9px] text-muted-foreground/60 px-1 font-mono">
+                                                            {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })
