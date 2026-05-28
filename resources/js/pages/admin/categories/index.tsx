@@ -161,15 +161,8 @@ export default function CategoriesIndex({ categories }: Props) {
     const handleSaveSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const payload = {
-            name: saveForm.data.name,
-            description: saveForm.data.description,
-            is_active: saveForm.data.is_active === '1',
-        };
-
         if (editingCategory) {
             saveForm.put(categoriesRoute.update.url(editingCategory.id), {
-                data: payload,
                 onSuccess: () => {
                     setIsSaveOpen(false);
                     toast.success('Category updated successfully.');
@@ -180,7 +173,6 @@ export default function CategoriesIndex({ categories }: Props) {
             });
         } else {
             saveForm.post(categoriesRoute.store.url(), {
-                data: payload,
                 onSuccess: () => {
                     setIsSaveOpen(false);
                     saveForm.reset();

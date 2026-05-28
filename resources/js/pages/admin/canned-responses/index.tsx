@@ -279,7 +279,7 @@ export default function CannedResponsesIndex({ cannedResponses }: Props) {
                 {/* Pagination */}
                 {cannedResponses.last_page > 1 && (
                     <div className="mt-4">
-                        <Pagination meta={cannedResponses} />
+                        <Pagination links={cannedResponses.links} />
                     </div>
                 )}
             </div>

@@ -23,7 +23,7 @@ export function UnassignedAlert({ unassignedCount }: UnassignedAlertProps) {
                     There are currently <span className="font-semibold text-foreground font-mono">{unassignedCount}</span> unassigned tickets waiting to be assigned to agents.
                 </p>
                 <Button variant="link" size="sm" asChild className="p-0 h-auto text-xs font-semibold text-destructive hover:underline inline-flex items-center gap-1">
-                    <Link href={adminTicketsRoute.index.url({ status: 'open' })}>
+                    <Link href={`${adminTicketsRoute.index.url()}?status=open`}>
                         Go to Triage Queue
                         <ArrowRight className="size-3" />
                     </Link>
