@@ -202,6 +202,20 @@ export default function AdminTicketsIndex({ tickets, stats, categories, admins, 
         return () => clearTimeout(timer);
     }, [search, status, priority, categoryId, assignedTo]);
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const queryParams = new URLSearchParams();
+            if (search) queryParams.append('search', search);
+            if (status !== 'all') queryParams.append('status', status);
+            if (priority !== 'all') queryParams.append('priority', priority);
+            if (categoryId !== 'all') queryParams.append('category_id', categoryId);
+            if (assignedTo !== 'all') queryParams.append('assigned_to', assignedTo);
+            
+            const searchStr = queryParams.toString();
+            sessionStorage.setItem('admin_tickets_filters', searchStr ? `?${searchStr}` : '');
+        }
+    }, [search, status, priority, categoryId, assignedTo]);
+
     const handleClearFilters = () => {
         setSearch('');
         setStatus('all');

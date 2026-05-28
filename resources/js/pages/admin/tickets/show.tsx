@@ -8,7 +8,7 @@ import {
     MessageSquare,
     Sparkles,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
@@ -96,6 +96,17 @@ function formatDate(dateStr: string): string {
 }
 
 export default function AdminTicketsShow({ ticket, admins, categories, cannedResponses = [] }: Props) {
+    const [backUrl, setBackUrl] = useState(adminTicketsRoute.index.url());
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const savedFilters = sessionStorage.getItem('admin_tickets_filters');
+            if (savedFilters) {
+                setBackUrl(`${adminTicketsRoute.index.url()}${savedFilters}`);
+            }
+        }
+    }, []);
+
     const [activeTab, setActiveTab] = useState<'public' | 'internal'>('public');
 
     const handleCannedResponseSelect = (value: string) => {
@@ -229,7 +240,7 @@ export default function AdminTicketsShow({ ticket, admins, categories, cannedRes
             <div className="flex h-full flex-1 flex-col gap-4 p-4 sm:gap-6 sm:p-6">
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" asChild className="size-8">
-                        <Link href={adminTicketsRoute.index.url()}>
+                        <Link href={backUrl}>
                             <ArrowLeft className="size-4" />
                         </Link>
                     </Button>
