@@ -146,6 +146,26 @@ export default function AdminTicketsShow({ ticket, admins, categories, cannedRes
         }
     };
 
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const val = e.target.value;
+        commentForm.setData('body', val);
+
+        if (activeTab !== 'public') return;
+
+        // Detect if user typed a shortcut followed by space or newline
+        const lastWordMatch = val.match(/(\/[a-zA-Z0-9_-]+)(\s)$/);
+        if (lastWordMatch) {
+            const shortcut = lastWordMatch[1];
+            const whitespace = lastWordMatch[2];
+            const found = cannedResponses.find(r => r.shortcut.toLowerCase() === shortcut.toLowerCase());
+            if (found) {
+                const replacedText = val.slice(0, val.length - shortcut.length - whitespace.length) + found.body + whitespace;
+                commentForm.setData('body', replacedText);
+                toast.success(`Injected template "${found.title}"`);
+            }
+        }
+    };
+
     // Forms
     const commentForm = useForm({
         body: '',
@@ -418,7 +438,7 @@ export default function AdminTicketsShow({ ticket, admins, categories, cannedRes
                                         }`}>
                                             <textarea
                                                 value={commentForm.data.body}
-                                                onChange={(e) => commentForm.setData('body', e.target.value)}
+                                                onChange={handleTextareaChange}
                                                 placeholder={activeTab === 'internal' ? 'Write a private internal note for other admins...' : 'Reply to the customer...'}
                                                 rows={4}
                                                 required
