@@ -386,16 +386,16 @@ export default function AdminTicketsShow({ ticket, admins, categories, cannedRes
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col items-end gap-1">
-                                                    <span className="text-[10px] text-primary font-semibold px-1">
-                                                        {comment.user.name} (Support)
-                                                    </span>
-                                                    <div className="p-3.5 px-4 bg-gradient-to-br from-primary to-primary-active text-white rounded-2xl rounded-tr-xs text-sm shadow-xs leading-relaxed whitespace-pre-wrap hover:scale-[1.005] hover:shadow-xs transition-all duration-200 border-none">
-                                                        {comment.body}
-                                                    </div>
-                                                    <span className="text-[9px] text-muted-foreground/60 px-1 font-mono">
-                                                        {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
+                                                     <span className="text-[10px] text-orange-600 dark:text-orange-400 font-semibold px-1">
+                                                         {comment.user.name} (Support)
+                                                     </span>
+                                                     <div className="p-3.5 px-4 bg-orange-500/10 dark:bg-orange-500/15 border border-orange-500/25 text-orange-950 dark:text-orange-100 rounded-2xl rounded-tr-xs text-sm shadow-xs leading-relaxed whitespace-pre-wrap hover:scale-[1.005] hover:shadow-xs transition-all duration-200">
+                                                         {comment.body}
+                                                     </div>
+                                                     <span className="text-[9px] text-muted-foreground/60 px-1 font-mono">
+                                                         {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                     </span>
+                                                 </div>
                                             )}
                                         </div>
                                     );
