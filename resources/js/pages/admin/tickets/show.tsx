@@ -73,10 +73,18 @@ interface Ticket {
     assigned_to?: number | null;
 }
 
+interface CannedResponse {
+    id: string;
+    title: string;
+    shortcut: string;
+    body: string;
+}
+
 interface Props {
     ticket: Ticket;
     admins: User[];
     categories: Category[];
+    cannedResponses?: CannedResponse[];
 }
 
 const STATUS_CONFIG = {
@@ -127,8 +135,16 @@ function formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export default function AdminTicketsShow({ ticket, admins, categories }: Props) {
+export default function AdminTicketsShow({ ticket, admins, categories, cannedResponses = [] }: Props) {
     const [activeTab, setActiveTab] = useState<'public' | 'internal'>('public');
+
+    const handleCannedResponseSelect = (value: string) => {
+        const selected = cannedResponses.find(r => r.id === value);
+        if (selected) {
+            commentForm.setData('body', commentForm.data.body + (commentForm.data.body ? "\n\n" : "") + selected.body);
+            toast.success(`Inserted template "${selected.title}"`);
+        }
+    };
 
     // Forms
     const commentForm = useForm({
@@ -409,7 +425,7 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                                                 className="w-full bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-hidden min-h-[100px] resize-none"
                                             />
                                             
-                                            <div className="flex items-center justify-between border-t border-border/60 px-4 py-2 bg-muted/20 rounded-b-xl text-[11px] text-muted-foreground">
+                                            <div className="flex items-center justify-between border-t border-border/60 px-4 py-2 bg-muted/20 rounded-b-xl text-[11px] text-muted-foreground gap-4">
                                                 <span className="flex items-center gap-1">
                                                     {activeTab === 'internal' ? (
                                                         <>
@@ -423,6 +439,27 @@ export default function AdminTicketsShow({ ticket, admins, categories }: Props) 
                                                         </>
                                                     )}
                                                 </span>
+
+                                                {cannedResponses.length > 0 && activeTab === 'public' && (
+                                                    <div className="flex items-center gap-1.5 select-none" onClick={(e) => e.stopPropagation()}>
+                                                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Template:</span>
+                                                        <Select onValueChange={handleCannedResponseSelect}>
+                                                            <SelectTrigger className="h-6 text-[11px] px-2 py-0.5 w-[150px] bg-background border-border/60 shadow-none hover:bg-muted/30 transition-colors">
+                                                                <SelectValue placeholder="Insert canned reply..." />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="max-w-[250px] bg-background">
+                                                                {cannedResponses.map((item) => (
+                                                                    <SelectItem key={item.id} value={item.id} className="text-[11px] cursor-pointer">
+                                                                        <div className="flex flex-col gap-0.5 items-start">
+                                                                            <span className="font-semibold text-foreground">{item.title}</span>
+                                                                            <span className="text-[10px] text-muted-foreground font-mono">{item.shortcut}</span>
+                                                                        </div>
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 

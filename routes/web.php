@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CannedResponseController;
 use App\Http\Controllers\Admin\TicketCommentController as AdminTicketCommentController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\CategoryController;
@@ -28,6 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
         Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
         Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+
+        // Admin Canned Responses CRUD
+        Route::resource('canned-responses', CannedResponseController::class)->except(['create', 'edit', 'show']);
 
         // Admin Ticket & Comment Resources
         Route::resource('tickets', AdminTicketController::class)->only(['index', 'show', 'update']);

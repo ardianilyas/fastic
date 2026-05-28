@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CannedResponse;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Ticket;
@@ -73,5 +74,24 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Ticket was submitted by John Doe',
             ]);
         });
+
+        // Seed Canned Responses
+        CannedResponse::create([
+            'title' => 'Thank You & Investigating',
+            'shortcut' => '/thanks',
+            'body' => "Thank you for reaching out to us!\n\nWe have received your ticket and our team is currently investigating the issue. We will update you as soon as we have more information.\n\nBest regards,\nSupport Team",
+        ]);
+
+        CannedResponse::create([
+            'title' => 'Request More Details',
+            'shortcut' => '/details',
+            'body' => "Hello,\n\nTo help us investigate this issue further, could you please provide some additional details?\n- Steps to reproduce the issue\n- Screenshots or error messages, if any\n- The browser or operating system you are using\n\nThank you for your cooperation!\n\nBest regards,\nSupport Team",
+        ]);
+
+        CannedResponse::create([
+            'title' => 'Resolution & Closing',
+            'shortcut' => '/solved',
+            'body' => "Hello,\n\nWe believe this issue has now been fully resolved. We are going to mark this ticket as resolved/closed.\n\nIf you run into any other problems, feel free to open a new ticket.\n\nBest regards,\nSupport Team",
+        ]);
     }
 }

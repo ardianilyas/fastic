@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CannedResponse;
 use App\Models\Category;
 use App\Models\Ticket;
 use App\Models\TicketTimeline;
@@ -103,11 +104,13 @@ class TicketController extends Controller
 
         $admins = User::where('role', 'admin')->orderBy('name')->get(['id', 'name', 'email']);
         $categories = Category::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $cannedResponses = CannedResponse::orderBy('title', 'asc')->get(['id', 'title', 'shortcut', 'body']);
 
         return Inertia::render('admin/tickets/show', [
             'ticket' => $ticket,
             'admins' => $admins,
             'categories' => $categories,
+            'cannedResponses' => $cannedResponses,
         ]);
     }
 

@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, Tags, LifeBuoy, Inbox } from 'lucide-react';
+import { BookOpen, FolderGit2, LayoutGrid, Tags, LifeBuoy, Inbox, MessageSquare } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -17,6 +17,7 @@ import { dashboard } from '@/routes';
 import categoriesRoute from '@/routes/admin/categories';
 import ticketsRoute from '@/routes/tickets';
 import adminTicketsRoute from '@/routes/admin/tickets';
+import cannedResponsesRoute from '@/routes/admin/canned-responses';
 import type { NavItem } from '@/types';
 
 const footerNavItems: NavItem[] = [
@@ -60,6 +61,11 @@ export function AppSidebar() {
             title: 'Categories',
             href: categoriesRoute.index.url(),
             icon: Tags,
+        },
+        {
+            title: 'Canned Responses',
+            href: cannedResponsesRoute.index.url(),
+            icon: MessageSquare,
         },
     ];
 
